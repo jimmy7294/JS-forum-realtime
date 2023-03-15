@@ -123,6 +123,42 @@ VALUES
     (9,3,5),
     (10,3,7);
 
+INSERT INTO comment (id,user_id,post_id,content,created_at,updated_at,liked_no,disliked_no)
+VALUES
+    (1,1,4,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (2,2,4,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (3,3,4,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (4,1,6,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (5,2,6,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (6,3,6,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (7,1,8,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (8,2,8,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (9,3,8,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (10,1,5,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (11,2,5,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (12,3,5,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (13,1,7,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (14,2,7,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (15,3,7,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (16,1,8,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (17,2,8,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (18,3,8,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (19,1,4,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (20,2,4,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (21,3,4,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (22,1,6,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (23,2,6,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (24,3,6,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (25,1,8,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (26,2,8,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (27,3,8,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (28,1,5,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (29,2,5,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (30,3,5,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (31,1,7,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (32,2,7,'I disagree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0),
+    (33,3,7,'I agree!',DateTime('now','localtime'),DateTime('now','localtime'),0,0);
+
 INSERT INTO message (id,from_user,to_user,is_read,message,created_at)
 VALUES
     (1,1,2,1,'Hello user!',DateTime('now','localtime')),

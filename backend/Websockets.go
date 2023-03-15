@@ -135,7 +135,7 @@ func handleWebSocketMessage(conn *websocket.Conn, message ServerMessage) {
 	switch message.Type {
 	case "new_user":
 		handleNewUserMessage(message)
-	case "new_category":
+	case "create_category":
 		handleNewCategoryMessage(message)
 	case "new_post":
 		handleNewPostMessage(message)
@@ -157,6 +157,8 @@ func handleWebSocketMessage(conn *websocket.Conn, message ServerMessage) {
 		handleRegisterResponseMessage(conn, message)
 	case "get_categories":
 		handleGetCategoriesMessage(conn, message)
+	case "get_comments":
+		handleGetCommentsMessage(conn, message)
 	case "get_users":
 		handleGetUsersMessage(conn, message)
 	case "get_offline_users":
@@ -194,20 +196,47 @@ func handleGetCategoriesMessage(conn *websocket.Conn, message ServerMessage) {
 // function to handle the new category message (when a new category is created)
 func handleNewCategoryMessage(message ServerMessage) {
 	fmt.Println(Red + "Category Handler called" + Reset)
-	// Add the new category to the list of categories
-	categories = append(categories, ServerCategory{Name: message.Categories[0].Name, URL: message.Categories[0].URL})
+	fmt.Println("The message is", message.Data["category"], message.Data["username"])
 
-	// Send the updated list of categories to all clients
-	Broadcast <- ServerMessage{Type: "categories", Categories: categories}
+	// open the database
+	db := OpenDatabase()
+	defer CloseDatabase(db)
+
+	CreateCategory(db, message.Data["category"], message.Data["username"])
+
+	// Get all the categories from the database and send them to the client
+	tempUserlist, _ := GetAllCategories(db)
+	tempUserlist2 := make([]ServerCategory, len(tempUserlist))
+	for i, v := range tempUserlist {
+		tempUserlist2[i] = ServerCategory{ID: v.ID, CategoryName: v.CategoryName, Description: v.Description, CreatedAt: v.CreatedAt}
+	}
+
+	fmt.Println(Blue + "Server >> Sending Everything to clients" + Reset)
+
+	Broadcast <- ServerMessage{Type: "categories", Categories: tempUserlist2}
 }
 
 // function to handle the new post message (when a new post is created)
 func handleNewPostMessage(message ServerMessage) {
-	// Add the new post to the list of posts
-	posts = append(posts, ServerPost{Title: message.Posts[0].Title, Content: message.Posts[0].Content, Author: message.Posts[0].Author, Date: message.Posts[0].Date})
+	//fmt.Println(Red + "Post Handler called" + Reset)
+	//fmt.Println("The message is", message.Data["title"], message.Data["content"], message.Data["category"], message.Data["authur"], message.Data["username"])
 
-	// Send the updated list of posts to all clients
-	Broadcast <- ServerMessage{Type: "posts", Posts: posts}
+	// open the database
+	db := OpenDatabase()
+	defer CloseDatabase(db)
+
+	// Add the new post to the database
+	AddPost(db, message.Data["title"], message.Data["content"], message.Data["category"], message.Data["username"])
+
+	// Get all the posts from the database and send them to the client
+	posts, _ := GetLatestPosts(db)
+	postList := make([]ServerPost, len(posts))
+	for i, v := range posts {
+		postList[i] = ServerPost{ID: v.ID, Title: v.Title, Content: v.Content, CreatedAt: v.CreatedAt, UserID: v.UserID, UserName: v.UserName}
+	}
+
+	// send the posts to the client
+	Broadcast <- ServerMessage{Type: "posts", Posts: postList}
 }
 
 // function to handle the get chat history message (when a user wants to see the chat history)
@@ -233,10 +262,6 @@ func handleGetChatHistoryMessage(conn *websocket.Conn, message ServerMessage) {
 
 // function to handle the message message (when a user sends a message to another user)
 func handleMessageMessage(conn *websocket.Conn, message ServerMessage) {
-	for _, v := range sessions {
-		fmt.Println(v.WebSocketConn)
-		fmt.Println(v.Username)
-	}
 	fmt.Println("Message received from ", message.From, " to ", message.To, ": ", message.Text)
 
 	// Add the message to the conversation history
@@ -340,7 +365,7 @@ func handleLogoutMessage(conn *websocket.Conn, message ServerMessage) {
 	}
 
 	//debug print
-	fmt.Println("Server >> Cookie: " + modifiedCookie)
+	//fmt.Println("Server >> Cookie: " + modifiedCookie)
 
 	tempUser := ""
 
@@ -374,9 +399,9 @@ func handleLogoutMessage(conn *websocket.Conn, message ServerMessage) {
 	delete(sessions, modifiedCookie)
 
 	//loop current sesssions
-	for _, v := range LoggedInUsers {
+	/* 	for _, v := range LoggedInUsers {
 		fmt.Println("FUCK!!! ", v.Username)
-	}
+	} */
 
 	conn.WriteJSON(ServerMessage{Type: "logoutResponse", Data: map[string]string{"logout": "true"}})
 	fmt.Println(Yellow + "Server >> User " + tempUser + " has logged out!" + Reset)
@@ -540,7 +565,39 @@ func handleGetOfflineUsersMessage(conn *websocket.Conn, message ServerMessage) {
 		}
 	}
 
-	fmt.Println("Offline users: ", len(templist))
+	//fmt.Println("Offline users: ", len(templist))
 
 	Broadcast <- ServerMessage{Type: "offline_users", Users: templist}
+}
+
+func handleGetCommentsMessage(conn *websocket.Conn, message ServerMessage) {
+	fmt.Println("Get comments message received")
+	//open db
+	db := OpenDatabase()
+	defer db.Close()
+
+	fmt.Printf("The message is: %v, %v", message.Data["content"], message.Data["username"])
+
+	comments, err := GetCommentsByPostTitle(db, message.Data["content"])
+	if err != nil {
+		fmt.Println("Error getting comments")
+	}
+
+	commentList := make([]ServerComment, len(comments))
+	for i, v := range comments {
+		commentList[i] = ServerComment{ID: v.ID, Content: v.Content, CreatedAt: v.CreatedAt, UserID: v.UserID, UserName: v.UserName}
+	}
+
+	// send the posts to the client
+	Broadcast <- ServerMessage{Type: "comments", Comment: commentList}
+
+	// Get all the comments from the database and send them to the client
+	/* 	comments, _ := GetLatestComments(db)
+	   	commentList := make([]ServerComment, len(comments))
+	   	for i, v := range comments {
+	   		commentList[i] = ServerComment{ID: v.ID, Content: v.Content, CreatedAt: v.CreatedAt, PostID: v.PostID, UserID: v.UserID, UserName: v.UserName}
+	   	} */
+
+	// send the comments to the client
+	//Broadcast <- ServerMessage{Type: "comments", Comments: commentList}
 }

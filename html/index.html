@@ -62,10 +62,6 @@
       <div class="container">
          <div class="left-sidebar">
             <ul>
-               <li><a href="#">Home</a></li>
-               <li><a href="#">Forum</a></li>
-               <li><a href="#">Chat</a></li>
-               <li><a href="#">Profile</a></li>
             </ul>
          </div>
          <div class="main-content">
@@ -79,25 +75,33 @@
                      <span class="post-date">February 28, 2023</span>
                      <button class="comment-btn">Comment</button>
                   </div>
-                  <div class="comments">
-                     <div class="comment">
-                        <p class="comment-content">This is a comment on the post.</p>
-                        <div class="comment-meta">
-                           <span class="comment-author">Commented by Mathisen</span>
-                           <span class="comment-date">February 28, 2023</span>
-                        </div>
+                  <div class="comments-popup">
+                     <div class="comments-popup-content">
+                       <span class="comments-popup-close">&times;</span>
+                       <h2>Comments</h2>
+                       <div class="comments"></div>
+                       <form id="add-comment-form">
+                         <label for="comment-text">Comment:</label>
+                         <input type="text" id="comment-text" name="comment-text" required>
+                         <input type="hidden" id="post-id" name="post-id">
+                         <button type="submit">Add Comment</button>
+                       </form>
                      </div>
-                  </div>
+                   </div>         
                </div>
             </div>
             <div class="new-post-form">
                <h3>New Post</h3>
                <form id="new-post-form">
-                  <input type="text" name="title" placeholder="Title" required>
-                  <textarea name="content" placeholder="Post content" required></textarea>
-                  <button type="submit">Create Post</button>
+                 <input type="text" name="title" placeholder="Title" required>
+                 <textarea name="content" placeholder="Post content" required></textarea>
+                 <label for="category">Category:</label>
+                 <select name="category" id="category" required>
+                   <option value="">Select a category</option>
+                 </select>
+                 <button type="submit">Create Post</button>
                </form>
-            </div>
+             </div>             
          </div>
          <div class="right-sidebar">
             <div id="user-list">

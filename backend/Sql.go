@@ -271,3 +271,68 @@ func GetAllUsers(db *sql.DB) ([]User, error) {
 
 	return users, nil
 }
+
+func AddPost(db *sql.DB, title string, content string, category string, username string) {
+	liked := 0
+	disliked := 0
+	dummy := 0
+
+	// Get user ID
+	userID := GetUserID(db, username)
+
+	// Insert post into database
+	_, err := db.Exec("insert into post(user_id,title,content,created_at,updated_at,liked_no,disliked_no,img_url,approved,dummy) values(?,?,?,?,?,?,?,?,?,?)", userID, title, content, time.Now().Format(time_format), time.Now().Format(time_format), liked, disliked, "", 1, dummy)
+	if err != nil {
+		// Handle error
+		fmt.Printf(Red+"Server >> Error adding post to database: %s "+Reset, err)
+	}
+	fmt.Println(Green + "Server >> Post added to database" + Reset)
+}
+
+func CreateCategory(db *sql.DB, category string, username string) {
+	Description := "This is is not used yet in this version of the forum"
+
+	// insert into category table
+	_, err := db.Exec("insert into category(category_name,descript,created_at) values(?,?,?)", category, Description, time.Now().Local().Format(time_format))
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Println(Green + "Server >> Category added to database" + Reset)
+}
+
+func GetCommentsByPostTitle(db *sql.DB, postTitle string) ([]Comment, error) {
+	query := `
+        SELECT comment.id, comment.user_id, comment.post_id, comment.content, comment.created_at, comment.updated_at, comment.liked_no, comment.disliked_no
+        FROM post
+        JOIN comment ON post.id = comment.post_id
+        WHERE post.title = ?;
+    `
+	rows, err := db.Query(query, postTitle)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	comments := []Comment{}
+	for rows.Next() {
+		var comment Comment
+		err := rows.Scan(&comment.ID, &comment.UserID, &comment.PostID, &comment.Content, &comment.CreatedAt, &comment.UpdatedAt, &comment.LikedNo, &comment.DislikedNo)
+		if err != nil {
+			return nil, err
+		}
+		comments = append(comments, comment)
+	}
+
+	// is comment empty?
+	if len(comments) == 0 {
+		fmt.Println("No comments found for post: ", postTitle)
+	}
+
+	//Debug print on what is returned
+	for _, comment := range comments {
+		fmt.Println("Debug: ", comment)
+	}
+
+	return comments, nil
+}

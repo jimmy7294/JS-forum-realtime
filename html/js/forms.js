@@ -180,6 +180,13 @@ document.addEventListener('DOMContentLoaded', function() {
       script.src = '/js/display-offline.js';
       document.head.appendChild(script);
       }
+              // load new-post.js script if it has not been loaded yet when user logs in
+              if (!document.getElementById('new-post-script')) {
+                var script = document.createElement('script');
+                script.id = 'new-post-script';
+                script.src = '/js/new-post.js';
+                document.head.appendChild(script);
+                } 
 
     } else if (message.type === 'registerResponse') {
       //console.log("Received registration response from server", message.data);
@@ -336,6 +343,14 @@ document.addEventListener('DOMContentLoaded', function() {
         var script = document.createElement('script');
         script.id = 'display-offline-script';
         script.src = '/js/display-offline.js';
+        document.head.appendChild(script);
+        }
+
+        // load new-post.js script if it has not been loaded yet when user logs in
+        if (!document.getElementById('new-post-script')) {
+        var script = document.createElement('script');
+        script.id = 'new-post-script';
+        script.src = '/js/new-post.js';
         document.head.appendChild(script);
         }
 

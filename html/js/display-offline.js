@@ -27,7 +27,7 @@
                   break; // Limit the list to a maximum of 10 users
                 }
                 const userElem = document.createElement("div");
-                userElem.textContent = user.username;
+                //userElem.textContent = user.username;
                 
                 // Create a green circle element to indicate that the user is logged in
                 const greenCircle = document.createElement("span");
@@ -37,9 +37,11 @@
                 greenCircle.style.borderRadius = "50%";
                 greenCircle.style.display = "inline-block";
                 greenCircle.style.marginRight = "10px";
+                greenCircle.style.marginLeft = "10px";
                 
                 // Add the green circle element to the user element
                 userElem.appendChild(greenCircle);
+                userElem.appendChild(document.createTextNode(user.username));
 
                 document.querySelector('.left-sidebar').style.display = 'block';
                 document.querySelector('.right-sidebar').style.display = 'block';

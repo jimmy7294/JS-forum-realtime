@@ -41,17 +41,17 @@ type Category struct {
 }
 
 type Comment struct {
-	ID             int
-	UserID         int
-	UserName       string
-	PostID         int
-	Content        string
-	CreatedAt      time.Time
-	UpdatedAt      time.Time
-	Date           string
-	LikedNumber    int
-	DislikedNumber int
-	IsEdited       bool
+	ID         int
+	UserID     int
+	UserName   string
+	PostID     int
+	Content    string
+	CreatedAt  time.Time
+	UpdatedAt  time.Time
+	Date       string
+	LikedNo    int
+	DislikedNo int
+	IsEdited   bool
 }
 
 type Post struct {
@@ -117,6 +117,7 @@ type ServerMessage struct {
 	User        ServerUser        `json:"user"`
 	Post        ServerPost        `json:"post"`
 	Category    ServerCategory    `json:"category"`
+	Comment     []ServerComment   `json:"comment"`
 	To          string            `json:"to"`
 	From        string            `json:"from"`
 	Text        string            `json:"text"`
@@ -137,6 +138,7 @@ type ServerCategory struct {
 type ServerPost struct {
 	Title          string    `json:"title"`
 	Content        string    `json:"content"`
+	Category       string    `json:"category"`
 	Author         string    `json:"author"`
 	Date           string    `json:"date"`
 	ID             int       `json:"id"`
@@ -150,5 +152,19 @@ type ServerPost struct {
 	URL            string    `json:"url"`
 	Approved       int       `json:"approved"`
 	Dummy          int       `json:"dummy"`
+	IsEdited       bool      `json:"isedited"`
+}
+
+type ServerComment struct {
+	ID             int       `json:"id"`
+	UserID         int       `json:"userid"`
+	UserName       string    `json:"username"`
+	PostID         int       `json:"postid"`
+	Content        string    `json:"content"`
+	CreatedAt      time.Time `json:"createdat"`
+	UpdatedAt      time.Time `json:"updatedat"`
+	Date           string    `json:"date"`
+	LikedNumber    int       `json:"likednumber"`
+	DislikedNumber int       `json:"dislikednumber"`
 	IsEdited       bool      `json:"isedited"`
 }
