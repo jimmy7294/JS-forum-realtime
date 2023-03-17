@@ -45,6 +45,7 @@ type Comment struct {
 	UserID     int
 	UserName   string
 	PostID     int
+	Username   string
 	Content    string
 	CreatedAt  time.Time
 	UpdatedAt  time.Time
@@ -70,6 +71,7 @@ type Post struct {
 	Approved       int
 	Dummy          int
 	IsEdited       bool
+	CategoryName   string
 }
 
 type Reaction struct {
@@ -94,10 +96,10 @@ type Message struct {
 	RecipientUsername string
 	Content           string
 	CreatedAt         string
-	From              int       `json:"from"`
+	From              string    `json:"from"`
 	Text              string    `json:"text"`
 	ChatHistory       []Message `json:"chathistory"`
-	To                int       `json:"to,omitempty"`
+	To                string    `json:"to,omitempty"`
 	Read              int       `json:"isread"`
 }
 
@@ -138,7 +140,7 @@ type ServerCategory struct {
 type ServerPost struct {
 	Title          string    `json:"title"`
 	Content        string    `json:"content"`
-	Category       string    `json:"category"`
+	CategoryName   string    `json:"category"`
 	Author         string    `json:"author"`
 	Date           string    `json:"date"`
 	ID             int       `json:"id"`

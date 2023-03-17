@@ -1,9 +1,28 @@
+//Global variables to save users names
+let CurrentReceiver = "";
+
 // Create a chat window element and append it to the DOM
 const chatWindow = document.createElement("div");
 chatWindow.id = "chat-window";
 document.body.appendChild(chatWindow);
 
+// Create a typing indicator element
+const typingIndicator = document.createElement("div");
+typingIndicator.className = "typing-indicator";
+typingIndicator.style.display = "none"; // Initially hide the typing indicator
+
+// Create three dots for the typing indicator
+for (let i = 0; i < 3; i++) {
+  const dot = document.createElement("div");
+  dot.className = "typing-dot";
+  typingIndicator.appendChild(dot);
+}
+
 function openChatWindow(user) {
+  console.log("Opening chat window with user: " + user.username);
+
+  // Set the current receiver to the user that was clicked
+  CurrentReceiver = user.username;
   // Populate the chat window with the conversation history between the two users (if it exists)
   getChatHistory(user, (chatHistory) => {
     const history = JSON.parse(chatHistory);
@@ -32,6 +51,7 @@ function openChatWindow(user) {
       chatWindow.classList.remove("chat-window");
     });
 
+
     // Append the close button to the chat header
     chatHeader.appendChild(closeButton);
 
@@ -39,6 +59,7 @@ function openChatWindow(user) {
     const chatContainer = document.createElement("div");
     chatWindow.classList.add("chat-window"); // Add the chat-window class
     chatContainer.className = "chat-container";
+
 
     // Array to store received messages
     const receivedMessages = [];
@@ -70,6 +91,45 @@ function openChatWindow(user) {
     messageInput.placeholder = "Type your message...";
     inputContainer.appendChild(messageInput);
 
+    inputContainer.appendChild(typingIndicator);
+
+
+    let typingTimer; // Declare a variable to store the typing timer
+
+    // Add an event listener to the message input field to detect when a key is pressed and send a typing event to the server
+    messageInput.addEventListener("keydown", (event) => {
+      // Clear any existing typing timer
+      clearTimeout(typingTimer);
+    
+        // Construct the message object
+        const stopTypingMessage = {
+          type: "typing",
+          data: {
+            from: sessionStorage.getItem("username"),
+            to: user.username,
+          },
+        };
+      
+        // send the message object as a JSON string to the server
+        socket.send(JSON.stringify(stopTypingMessage));
+    
+      // Set a timer to send a stoptyping message after 3 seconds of inactivity
+      typingTimer = setTimeout(() => {
+        // Construct the message object
+        const stopTypingMessage = {
+          type: "stopTyping",
+          data: {
+            from: sessionStorage.getItem("username"),
+            to: user.username,
+          },
+        };
+      
+        // send the message object as a JSON string to the server
+        socket.send(JSON.stringify(stopTypingMessage));
+      }, 3000); // The number of milliseconds to wait before sending the stoptyping message (3000ms = 3s)
+    });
+    
+
     // Add an event listener to the message input field to detect when the Enter key is pressed
     messageInput.addEventListener("keydown", (event) => {
       if (event.key === "Enter") {
@@ -81,6 +141,8 @@ function openChatWindow(user) {
         // Clear the message input field
         messageInput.value = "";
       }
+      // Scroll to the bottom of the chat window
+      chatContainer.scrollTop = chatContainer.scrollHeight;
     });
 
     // Create the send button
@@ -119,7 +181,7 @@ document.getElementById('logout-form').style.display = 'block';
 // Function to get the conversation history between two users
 function getChatHistory(user, callback) {
   // Send a message to the server to request the conversation history
-  const message = JSON.stringify({ type: "get_chat_history", user: user });
+  const message = JSON.stringify({ type: "get_chat_history", user: user, from: sessionStorage.getItem("username")});
   socket.send(message);
 
   // Listen for the response from the server
@@ -155,6 +217,7 @@ function sendMessage(user, messageText) {
   if (message.from != user.username) {
   const messageTextElem = document.createElement("p");
   messageTextElem.textContent = messageText;
+  console.log("Message text: " + messageText)
   messageContainer.appendChild(messageTextElem);
   }
 
@@ -170,11 +233,8 @@ function sendMessage(user, messageText) {
 
 // Listen for received messages from the server
 socket.addEventListener("message", (event) => {
-  //console.log("Message received from server: " + event.data);
   const message = JSON.parse(event.data);
   if (message.type === "message") {
-    //console.log("Message received from server: " + JSON.stringify(message));
-    // Add the received message to the chat window
     const chatContainer = document.querySelector(".chat-container");
     const receivedMessageContainer = document.createElement("div");
     receivedMessageContainer.className = "message received";
@@ -184,10 +244,19 @@ socket.addEventListener("message", (event) => {
     receivedMessageContainer.appendChild(receivedMessageTextElem);
 
     chatContainer.appendChild(receivedMessageContainer);
-
-    // Scroll the chat window to the bottom
     chatContainer.scrollTop = chatContainer.scrollHeight;
   }
+  if (message.type === "typing") {
+    if (message.data.to === sessionStorage.getItem("username") && message.data.from === CurrentReceiver) {
+      console.log("Typing indicator received from server:");
+      typingIndicator.style.display = "block"; // Show the typing indicator
+    }
+  } else if (message.type === "stopTyping") {
+    console.log("Stop typing indicator received from server:");
+    if (message.data.to === sessionStorage.getItem("username") && message.data.from === CurrentReceiver) {
+      typingIndicator.style.display = "none"; // Hide the typing indicator
+    }
+  }  
 });
 
 

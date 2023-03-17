@@ -5,5 +5,6 @@ Users you can use for testing...
 - user2:user2
 - user3:user3
 
+Current version 0.8
 
 

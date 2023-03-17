@@ -6,7 +6,8 @@
    </head>
    <body>
       <div class="header">
-         <h1 style="font-family: 'Roboto Mono', monospace; font-weight: bold; font-size: 36px;">Realtime Forum<br>Version 2.0</h1>
+         <img src="css/logo.png" alt="logo" style="padding-left: 35%;">
+         <!-- <h1 style="font-family: 'Roboto Mono', monospace; font-weight: bold; font-size: 36px;">Realtime Forum<br>Version 2.0</h1> -->
          <!-- Logged In Message -->
          <div id="logged-in-message" style="display: none;">
             You are logged in.
@@ -59,7 +60,7 @@
       </div>
       <div id="registration-error" style="display: none;">
       </div>
-      <div class="container">
+      <div class="container" style="display: none;">
          <div class="left-sidebar">
             <ul>
             </ul>
@@ -71,27 +72,16 @@
                   <h4 class="post-title">Post Title</h4>
                   <p class="post-content">Example post text just writing something to have somethingh here...</p>
                   <div class="post-meta">
-                     <span class="post-author">Posted by Mathisen</span>
-                     <span class="post-date">February 28, 2023</span>
-                     <button class="comment-btn">Comment</button>
                   </div>
                   <div class="comments-popup">
                      <div class="comments-popup-content">
                        <span class="comments-popup-close">&times;</span>
-                       <h2>Comments</h2>
-                       <div class="comments"></div>
-                       <form id="add-comment-form">
-                         <label for="comment-text">Comment:</label>
-                         <input type="text" id="comment-text" name="comment-text" required>
-                         <input type="hidden" id="post-id" name="post-id">
-                         <button type="submit">Add Comment</button>
-                       </form>
                      </div>
                    </div>         
                </div>
             </div>
             <div class="new-post-form">
-               <h3>New Post</h3>
+               <h3>New Post</h3> 
                <form id="new-post-form">
                  <input type="text" name="title" placeholder="Title" required>
                  <textarea name="content" placeholder="Post content" required></textarea>
@@ -110,6 +100,9 @@
            <div id="offline-list">
               <h2>Users Offline</h2>
            </div>
+         </div>
+         <div class="footer">
+            <p>Realtime Forum Version 2.0</p>
          </div>
    </body>
    <script src="js/forms.js"></script>

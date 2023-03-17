@@ -55,6 +55,7 @@
                 document.getElementById('logged-in-message').style.display = 'block';
                 document.getElementById('logout-form').style.display = 'block';
                 
+                
                 // Add a click event listener to each user element that opens a chat window when clicked
                 userElem.addEventListener("click", () => {
                   openChatWindow(user);

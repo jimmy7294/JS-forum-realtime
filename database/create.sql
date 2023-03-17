@@ -18,6 +18,7 @@ CREATE TABLE category (
  created_at DATETIME NOT NULL
 );
 
+
 CREATE TABLE post (
  id INTEGER NOT NULL PRIMARY KEY,
  user_id INTEGER NOT NULL,

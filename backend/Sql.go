@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"sort"
 	"strconv"
 	"time"
 
@@ -134,29 +135,28 @@ func GetAllCategories(db *sql.DB) ([]Category, string) {
 }
 
 func GetLatestPosts(db *sql.DB) ([]Post, error) {
-	rows, err := db.Query("SELECT p.id, p.user_id, u.username, p.title, p.content, p.created_at, p.updated_at, p.liked_no, p.disliked_no, p.img_url, p.approved, p.dummy, CASE WHEN p.updated_at > p.created_at THEN 1 ELSE 0 END AS is_edited FROM post p INNER JOIN user u ON p.user_id = u.id ORDER BY p.created_at DESC LIMIT 5")
+	// Update the query to join the post and category_relation tables and select the category_name
+	query := `SELECT p.id, p.user_id, p.title, p.content, p.created_at, u.username, c.category_name
+				FROM post p
+				JOIN user u ON p.user_id = u.id
+				JOIN category_relation cr ON p.id = cr.post_id
+				JOIN category c ON cr.category_id = c.id
+				ORDER BY p.created_at DESC LIMIT 5`
+
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
+	defer rows.Close()
 
 	var posts []Post
-
 	for rows.Next() {
-		var post Post
-		var createdAt, updatedAt time.Time
-		err := rows.Scan(&post.ID, &post.UserID, &post.UserName, &post.Title, &post.Content, &createdAt, &updatedAt, &post.LikedNumber, &post.DislikedNumber, &post.ImgUrl, &post.Approved, &post.Dummy, &post.IsEdited)
+		var p Post
+		err := rows.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.CreatedAt, &p.UserName, &p.CategoryName) // Add the CategoryName field
 		if err != nil {
 			return nil, err
 		}
-		post.CreatedAt = createdAt.UTC()
-		post.UpdatedAt = updatedAt.UTC()
-		post.Date = post.CreatedAt.Format("January 2, 2006 at 3:04pm")
-		post.URL = "/posts/" + strconv.Itoa(post.ID)
-		posts = append(posts, post)
-	}
-	err = rows.Err()
-	if err != nil {
-		return nil, err
+		posts = append(posts, p)
 	}
 
 	// update posts with correct username
@@ -165,6 +165,11 @@ func GetLatestPosts(db *sql.DB) ([]Post, error) {
 		temp2 := string(temp.Username)
 		posts[i].UserName = temp2
 	}
+
+	// sort posts by date and time created (newest first)
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].CreatedAt.After(posts[j].CreatedAt)
+	})
 
 	return posts, nil
 }
@@ -194,14 +199,14 @@ func GetUserID(db *sql.DB, username string) string {
 	return userID
 }
 
-// Get chat history for a user from database
-func GetChatHistory(user string) []Message {
-	fmt.Println(Green + "Server >> Getting chat history for user: " + user + Reset)
+// Get chat history for a user from another user from the database
+func GetChatHistory(user string, from string) []Message {
+	fmt.Println(Green + "Server >> Getting chat history for user: " + user + " from user: " + from + Reset)
 	// Connect to database
 	db := OpenDatabase()
 	defer db.Close()
 	// Get messages from database/persistent storage
-	rows, err := db.Query("SELECT from_user, to_user, is_read, message FROM message WHERE (from_user = ? OR to_user = ?)", user, user)
+	rows, err := db.Query("SELECT from_user, to_user, is_read, message FROM message WHERE (from_user = ? AND to_user = ?) OR (from_user = ? AND to_user = ?)", user, from, from, user)
 
 	if err != nil {
 		fmt.Printf(Red+"Server >> Error getting chat history: %s"+Reset, err)
@@ -210,7 +215,8 @@ func GetChatHistory(user string) []Message {
 	messages := []Message{}
 	for rows.Next() {
 		// Read row data
-		var fromUser, toUser, isread int
+		var fromUser, toUser string
+		var isread int
 		var message string
 		err = rows.Scan(&fromUser, &toUser, &isread, &message)
 		if err != nil {
@@ -229,6 +235,7 @@ func GetChatHistory(user string) []Message {
 
 	return messages
 }
+
 func AddMessageToHistory(fromUser string, toUser string, messageText string) {
 	isread := 0
 	//DEBUG PRINT
@@ -303,9 +310,10 @@ func CreateCategory(db *sql.DB, category string, username string) {
 
 func GetCommentsByPostTitle(db *sql.DB, postTitle string) ([]Comment, error) {
 	query := `
-        SELECT comment.id, comment.user_id, comment.post_id, comment.content, comment.created_at, comment.updated_at, comment.liked_no, comment.disliked_no
+        SELECT comment.id, comment.user_id, comment.post_id, user.username, comment.content, comment.created_at, comment.updated_at, comment.liked_no, comment.disliked_no
         FROM post
         JOIN comment ON post.id = comment.post_id
+        JOIN user ON comment.user_id = user.id
         WHERE post.title = ?;
     `
 	rows, err := db.Query(query, postTitle)
@@ -317,7 +325,7 @@ func GetCommentsByPostTitle(db *sql.DB, postTitle string) ([]Comment, error) {
 	comments := []Comment{}
 	for rows.Next() {
 		var comment Comment
-		err := rows.Scan(&comment.ID, &comment.UserID, &comment.PostID, &comment.Content, &comment.CreatedAt, &comment.UpdatedAt, &comment.LikedNo, &comment.DislikedNo)
+		err := rows.Scan(&comment.ID, &comment.UserID, &comment.PostID, &comment.Username, &comment.Content, &comment.CreatedAt, &comment.UpdatedAt, &comment.LikedNo, &comment.DislikedNo)
 		if err != nil {
 			return nil, err
 		}
@@ -326,13 +334,65 @@ func GetCommentsByPostTitle(db *sql.DB, postTitle string) ([]Comment, error) {
 
 	// is comment empty?
 	if len(comments) == 0 {
-		fmt.Println("No comments found for post: ", postTitle)
+		return nil, nil
 	}
 
-	//Debug print on what is returned
-	for _, comment := range comments {
-		fmt.Println("Debug: ", comment)
-	}
+	/* 	for _, v := range comments {
+		fmt.Println(v.Username)
+	} */
 
 	return comments, nil
+}
+
+func InsertComment(db *sql.DB, postTitle string, username string, content string) {
+	// Get post ID
+	postID := GetPostID(db, content)
+
+	// Get user ID
+	userID := GetUserID(db, username)
+
+	// Insert comment into database
+	_, err := db.Exec("insert into comment(user_id,post_id,content,created_at,updated_at,liked_no,disliked_no) values(?,?,?,?,?,?,?)", userID, postID, postTitle, time.Now().Format(time_format), time.Now().Format(time_format), 0, 0)
+	if err != nil {
+		// Handle error
+		fmt.Printf(Red+"Server >> Error adding comment to database: %s "+Reset, err)
+	}
+	fmt.Println(Green + "Server >> Comment added to database" + Reset)
+}
+
+func GetPostID(db *sql.DB, postTitle string) int {
+	var postID int
+	err := db.QueryRow("select id from post where title = ?", postTitle).Scan(&postID)
+	if err != nil {
+		fmt.Println("Error 1: ", err)
+	}
+
+	return postID
+}
+
+func GetCategoryID(db *sql.DB, categoryName string) int {
+	fmt.Println("Category name: ", categoryName)
+	var categoryID int
+	err := db.QueryRow("select id from category where category_name = ?", categoryName).Scan(&categoryID)
+	if err != nil {
+		fmt.Println("Error 2: ", err)
+	}
+
+	fmt.Println("Category ID: ", categoryID)
+	return categoryID
+}
+
+func AddPostCategoryRelation(db *sql.DB, postTitle string, categoryName string) {
+	// Get post ID
+	postID := GetPostID(db, postTitle)
+	// Get category ID
+	categoryID, _ := strconv.Atoi(categoryName)
+
+	// insert into post_category table
+	_, err := db.Exec("insert into category_relation(post_id,category_id) values(?,?)", postID, categoryID)
+	if err != nil {
+		fmt.Println("Error 3: ", err)
+	}
+
+	fmt.Println(Green + "Server >> Post Category relation added to database" + Reset)
 }

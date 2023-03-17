@@ -1,5 +1,8 @@
 function requestComments(postId) {
+  //save post title to global variable as a string
   console.log("Requesting comments for post", postId);
+  // save postID to session storage
+  sessionStorage.setItem("postID", postId);
   // create a new message object
   const message = {
     type: "get_comments",
@@ -9,12 +12,14 @@ function requestComments(postId) {
     },
   };
 
+ 
   // send the message object as a JSON string to the server
+  console.log("Sending message to server", message);
   socket.send(JSON.stringify(message));
 }
 
-function openCommentsModal(postId, comments) {
-  console.log("Opening comments modal for post", postId, comments);
+function openCommentsModal(comments) {
+  console.log("Opening comments modal for post", comments);
   // Create a modal to display the comments and the input field for new comments
   const modal = document.createElement("div");
   modal.classList.add("comments-modal");
@@ -71,28 +76,36 @@ function openCommentsModal(postId, comments) {
   newCommentForm.onsubmit = (event) => {
     event.preventDefault();
     // Send the new comment to the server
-     // create a new message object
-  const message = {
-    type: "new_comment",
-    data: {
-      content: newCommentInput.value,
-      username: document.getElementById('username').value,
-    },
-  };
+    // create a new message object
+    const message = {
+      type: "new_comment",
+      data: {
+        content: newCommentInput.value,
+        username: sessionStorage.getItem("username"),
+        postid: sessionStorage.getItem("postID"),
+      },
+    };
 
-  // send the message object as a JSON string to the server
-  socket.send(JSON.stringify(message));
-  console.log("Sending new comment to server", message);
+    // send the message object as a JSON string to the server
+    socket.send(JSON.stringify(message));
+    console.log("Sending new comment to server", message);
 
-    const newComment = { content: newCommentInput.value, username: "Your username here" };
+    // update the comments list
+    const commentDiv = document.createElement("div");
+    commentDiv.classList.add("comment");
 
-    // Add the comment to the post and update the comments list
-    if (!post.comments) {
-      post.comments = [];
-    }
-    post.comments.push(newComment);
-    commentsDiv.innerHTML = "";
-    openCommentsModal(post);
+    const commentContent = document.createElement("p");
+    commentContent.classList.add("comment-content");
+    commentContent.textContent = newCommentInput.value;
+
+    const commentAuthor = document.createElement("span");
+    commentAuthor.classList.add("comment-author");
+    commentAuthor.textContent = `Comment by ${document.getElementById('username').value}`;
+
+    commentDiv.appendChild(commentContent);
+    commentDiv.appendChild(commentAuthor);
+
+    commentsDiv.appendChild(commentDiv);
 
     // Reset the input field
     newCommentInput.value = "";
@@ -110,11 +123,10 @@ function openCommentsModal(postId, comments) {
       // console.log("Received message from server: ", message);
 
       if (message.type === "comments") {
-        console.log("Received comments from server", message.comment.content);
         console.log("Received comments from server", message.comment);
         const postId = message.comment.content;
         const comments = message.comment;
-        openCommentsModal(postId, comments);
+        openCommentsModal(comments);
       }    
   
       if (message.type === "posts") {
@@ -122,12 +134,15 @@ function openCommentsModal(postId, comments) {
         const postsDiv = document.querySelector(".posts");
         console.log("Received posts from server", message.posts);
         // Clear the posts list before adding new posts
-        postsDiv.innerHTML = "<h1 style=\"font-family: 'Roboto Mono', monospace; font-weight: bold; font-size: 30px;\">Recent Posts</h1><hr><br>";
-  
+        postsDiv.innerHTML = "<h1 style=\"font-family: 'Roboto Mono', monospace; font-weight: bold; font-size: 30px;\">Recent Posts</h1>";
+
         if (message.posts) {
           for (const post of message.posts) {
             const postDiv = document.createElement("div");
             postDiv.classList.add("post");
+
+            const hr2 = document.createElement("hr");
+            postDiv.appendChild(hr2);
   
             const postTitle = document.createElement("h4");
             postTitle.classList.add("post-title");
@@ -139,14 +154,18 @@ function openCommentsModal(postId, comments) {
   
             const postMeta = document.createElement("div");
             postMeta.classList.add("post-meta");
+            postMeta.textContent = `Category: ${post.category}`;
   
             const postAuthor = document.createElement("span");
             postAuthor.classList.add("post-author");
-            postAuthor.textContent = `Posted by ${post.username}`;
+            postAuthor.textContent = `Posted by: ${post.username}`;
+
+            //convert timestamp to date
+            const date = new Date(post.createdat);
   
             const postDate = document.createElement("span");
             postDate.classList.add("post-date");
-            postDate.textContent = post.createdat;
+            postDate.textContent = `Post created: ${date.toDateString()}`;
 
             const commentButton = document.createElement("button");
             commentButton.classList.add("comment-btn");
@@ -163,6 +182,8 @@ function openCommentsModal(postId, comments) {
             postDiv.appendChild(postMeta);
             
             //add hr after each post
+            const br = document.createElement("br");
+            postDiv.appendChild(br);
             const hr = document.createElement("hr");
             postDiv.appendChild(hr);
   
@@ -178,7 +199,6 @@ function openCommentsModal(postId, comments) {
             document.querySelector('.register-form').style.display = 'none';
             document.getElementById('logged-in-message').style.display = 'block';
             document.getElementById('logout-form').style.display = 'block';
-            
           }
         }
         else {
@@ -194,5 +214,6 @@ function openCommentsModal(postId, comments) {
     // Send a message to the server to request the list of posts
     message = JSON.stringify({ type: "get_posts" });
     socket.send(message);
+    console.log("Sending get_posts to server", message)
 
     console.log("Posts.js loaded Getting posts from server...");
