@@ -225,7 +225,7 @@ func handleNewCategoryMessage(message ServerMessage) {
 // function to handle the new post message (when a new post is created)
 func handleNewPostMessage(message ServerMessage) {
 	//fmt.Println(Red + "Post Handler called" + Reset)
-	//fmt.Println("The message is", message.Data["title"], message.Data["content"], message.Data["category"], message.Data["authur"], message.Data["username"])
+	fmt.Println("The message is", message.Data["title"], message.Data["content"], message.Data["category"], message.Data["authur"], message.Data["username"])
 
 	// open the database
 	db := OpenDatabase()
@@ -250,9 +250,11 @@ func handleNewPostMessage(message ServerMessage) {
 
 // function to handle the get chat history message (when a user wants to see the chat history)
 func handleGetChatHistoryMessage(conn *websocket.Conn, message ServerMessage) {
-	fmt.Println("Message received: ", message.User)
-	fmt.Println("Message received: ", message.User.Username)
-	fmt.Println("Message from: ", message.From)
+	/* 	fmt.Println("Message received: ", message.User.Username)
+	   	fmt.Println("Message from: ", message.From)
+	   	fmt.Println("Message from: ", message.Start)
+	   	fmt.Println("Message from: ", message.Limit)
+	   	fmt.Println("Message from: ", message.Offset) */
 
 	db := OpenDatabase()
 	defer db.Close()
@@ -268,7 +270,7 @@ func handleGetChatHistoryMessage(conn *websocket.Conn, message ServerMessage) {
 	userID := GetUserID(db, username)
 	from := GetUserID(db, message.From)
 
-	chatHistory := GetChatHistory(userID, from)
+	chatHistory := GetChatHistory(userID, from, message.Start)
 
 	// Send the conversation history to the client
 	conn.WriteJSON(ServerMessage{Type: "chat_history", ChatHistory: chatHistory})
@@ -276,8 +278,9 @@ func handleGetChatHistoryMessage(conn *websocket.Conn, message ServerMessage) {
 
 // function to handle the message message (when a user sends a message to another user)
 func handleMessageMessage(conn *websocket.Conn, message ServerMessage) {
-	fmt.Println("Message received from ", message.From, " to ", message.To, ": ", message.Text)
+	//fmt.Println("Message received from ", message.From, " to ", message.To, ": ", message.Text)
 
+	message.Username = message.To
 	// Add the message to the conversation history
 	//open db
 	db := OpenDatabase()
@@ -288,8 +291,8 @@ func handleMessageMessage(conn *websocket.Conn, message ServerMessage) {
 	AddMessageToHistory(historyFrom, historyTo, message.Text)
 
 	for _, value := range LoggedInUsers {
-		fmt.Println(value.Username, value.WebSocketConn)
-		fmt.Println(message.To, message.From)
+		//fmt.Println(value.Username, value.WebSocketConn)
+		//fmt.Println(message.To, message.From)
 		if value.Username == message.To {
 			message.To = value.WebSocketConn
 		}
@@ -300,9 +303,9 @@ func handleMessageMessage(conn *websocket.Conn, message ServerMessage) {
 
 	// Send the message to the recipient
 	for client := range clients {
-		fmt.Printf("Client: %s To: %s From: %s, \n", client.RemoteAddr().String(), message.To, message.From)
+		//fmt.Printf("Client: %s To: %s From: %s, \n", client.RemoteAddr().String(), message.To, message.From)
 		if client.RemoteAddr().String() == message.To {
-			fmt.Println("Sending message to ", message.To)
+			//fmt.Println("Sending message to ", message.To)
 			err := client.WriteJSON(message)
 			if err != nil {
 				log.Println(err)
@@ -338,13 +341,45 @@ func handleLoginMessage(conn *websocket.Conn, message ServerMessage) {
 	}
 
 	if UserLoggedIn(username) {
-		fmt.Println(Red + "Server >> User already logged in" + Reset)
+		fmt.Println(Red + "Server >> User already logged in logging the user out from other endpoints" + Reset)
 
-		// FIX so the current user is logged out and the new user is logged in
-		// TODO: FIX THIS
+		//loop through the loggedInUsers map and remove the user
+		for key, value := range LoggedInUsers {
+			if value.Username == username {
+				// alert the user thats get forced logged out
+				for client := range clients {
+					if client.RemoteAddr().String() == value.WebSocketConn {
+						err := client.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"status": "error2", "message": "User already logged in"}})
+						if err != nil {
+							log.Println(err)
+							client.Close()
+							delete(clients, client)
+						}
+					}
+				}
+				//fmt.Println("Deleting loggedinusers user: ", value.Username)
+				delete(LoggedInUsers, key)
+			}
+		}
+
+		//loop through the clients map and remove the user
+		for key, value := range clients {
+			if value.Username == username {
+				//fmt.Println("Deleting clients user: ", value.Username)
+				delete(clients, key)
+			}
+		}
+
+		//loop through the sessions map and remove the user
+		for key, value := range sessions {
+			if value.Username == username {
+				//fmt.Println("Deleting sessions user: ", value.Username)
+				delete(sessions, key)
+			}
+		}
 
 		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"status": "error", "message": "User already logged in"}})
-		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"login": "false"}})
+		//conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"login": "false"}})
 		return
 	}
 
@@ -404,18 +439,13 @@ func handleLogoutMessage(conn *websocket.Conn, message ServerMessage) {
 	for _, session := range sessions {
 		if strings.Compare(session.Cookie, modifiedCookie) == 0 {
 			username = session.Username
-			fmt.Println(Yellow + "Server >> User " + username + " has logged out!" + Reset)
+			//fmt.Println(Yellow + "Server >> User " + username + " has logged out!" + Reset)
 		}
 	}
 
 	// Remove the user from the LoggedInUsers and sessions map
 	delete(LoggedInUsers, username)
 	delete(sessions, modifiedCookie)
-
-	//loop current sesssions
-	/* 	for _, v := range LoggedInUsers {
-		fmt.Println("FUCK!!! ", v.Username)
-	} */
 
 	conn.WriteJSON(ServerMessage{Type: "logoutResponse", Data: map[string]string{"logout": "true"}})
 	fmt.Println(Yellow + "Server >> User " + tempUser + " has logged out!" + Reset)
@@ -589,8 +619,6 @@ func handleGetCommentsMessage(conn *websocket.Conn, message ServerMessage) {
 	db := OpenDatabase()
 	defer db.Close()
 
-	//fmt.Printf("The message is: %v, %v\n", message.Data["content"], message.Data["username"])
-
 	comments, err := GetCommentsByPostTitle(db, message.Data["content"])
 	if err != nil {
 		fmt.Println("Error getting comments")
@@ -601,13 +629,9 @@ func handleGetCommentsMessage(conn *websocket.Conn, message ServerMessage) {
 		commentList[i] = ServerComment{ID: v.ID, Content: v.Content, CreatedAt: v.CreatedAt, UserID: v.UserID, UserName: v.Username}
 	}
 
-	//debug print to see if the comments are being sent
-	/* 	for _, v := range commentList {
-		fmt.Println(v.UserName, v.Content, v.CreatedAt, v.UserID, v.ID, v.PostID)
-	} */
-
-	// send the comments to the client
-	Broadcast <- ServerMessage{Type: "comments", Comment: commentList}
+	// send the comments to the requesting client
+	response := ServerMessage{Type: "comments", Comment: commentList}
+	conn.WriteJSON(response)
 }
 
 func handleNewCommentMessage(conn *websocket.Conn, message ServerMessage) {
@@ -632,9 +656,9 @@ func handleNewCommentMessage(conn *websocket.Conn, message ServerMessage) {
 }
 
 func handleTypingMessage(conn *websocket.Conn, message ServerMessage) {
-	fmt.Println("Typing message received")
-	fmt.Println(message.Data["to"])
-	fmt.Println(message.Data["from"])
+	// fmt.Println("Typing message received")
+	// fmt.Println(message.Data["to"])
+	// fmt.Println(message.Data["from"])
 	//open db
 	db := OpenDatabase()
 	defer db.Close()
@@ -646,9 +670,9 @@ func handleTypingMessage(conn *websocket.Conn, message ServerMessage) {
 }
 
 func handleStopTypingMessage(conn *websocket.Conn, message ServerMessage) {
-	fmt.Println("Stop typing message received")
-	fmt.Println(message.Data["to"])
-	fmt.Println(message.Data["from"])
+	// fmt.Println("Stop typing message received")
+	// fmt.Println(message.Data["to"])
+	// fmt.Println(message.Data["from"])
 	//open db
 	db := OpenDatabase()
 	defer db.Close()

@@ -1,78 +1,97 @@
-    // Listen for new messages from the server
-    socket.addEventListener("message", (event) => {
-      //console.log("Message received from server: " + event.data)
-      message = JSON.parse(event.data);
-  
-      if (message.type === "users") {
-        // Debugging to see the list of users
- /*        for (value of message.users) {
-          console.log("Online User >>>> ",value);
-        } */
+let currentChatUser = null;
 
-        // Update the user list
-        const usersDiv = document.getElementById("user-list");
-        // Clear the user list before adding new users
-        usersDiv.innerHTML = "<h2>Logged In Users</h2>";
-      
-        if (message.type === "users") {
-          // Update the user list
-          const usersDiv = document.getElementById("user-list");
-          // Clear the user list before adding new users
-          usersDiv.innerHTML = "<h2>Logged In Users</h2>";
+// function to sort users in alphabetical order
+function sortUsers(users) {
+  return users.sort((a, b) => {
+    return a.username.localeCompare(b.username);
+  });
+}
+
+// function to sort users by last message
+function moveUserToTop(userId) {
+  const usersDiv = document.getElementById("user-list");
+  const userContainer = document.getElementById("user-" + userId);
+  //console.log("userContainer: ", userContainer)
+  if (userContainer) {
+    usersDiv.removeChild(userContainer);
+    usersDiv.insertBefore(userContainer, usersDiv.children[1]);
+  }
+}
+
+socket.addEventListener("message", (event) => {
+  message = JSON.parse(event.data);
+
+  if (message.type === "users") {
+    const usersDiv = document.getElementById("user-list");
+    usersDiv.innerHTML = '';
+
+    if (message.users) {
+      let count = 0;
+      const sortedUsers = sortUsers(message.users);
+      for (const user of sortedUsers) {
+        if (count >= 10) {
+          break;
+        }
+        const userContainer = document.createElement("div");
+        userContainer.className = "user-container";
+        userContainer.id = "user-" + user.username;
+
+        const greenCircle = document.createElement("span");
+        greenCircle.style.backgroundColor = "green";
+        greenCircle.style.width = "10px";
+        greenCircle.style.height = "10px";
+        greenCircle.style.borderRadius = "50%";
+        greenCircle.style.display = "inline-block";
+        greenCircle.style.marginRight = "10px";
+        greenCircle.style.marginLeft = "10px";
+        userContainer.appendChild(greenCircle);
+
+        const usernameElem = document.createElement("span");
+        usernameElem.className = "username";
+        usernameElem.textContent = user.username;
+        userContainer.appendChild(usernameElem);
+
+        // If the user has a last message, display it in the user list  (this is the last message they sent or received)
+        if (currentChatUser === null || currentChatUser.id !== user.id) {
+          const bubbleGif = document.createElement("img");
+          bubbleGif.src = "css/bubble.gif";
+          bubbleGif.className = "bubble";
+          bubbleGif.style.marginLeft = "10px";
+          bubbleGif.setAttribute("data-recipient", user.username);
+          //console.log("Added recipient ID: " + user.username)
+          userContainer.appendChild(bubbleGif);
+        }
         
-          if (message.users) {
-            let count = 0;
-            for (const user of message.users) {
-              if (count >= 10) {
-                break; // Limit the list to a maximum of 10 users
-              }
-              const userElem = document.createElement("div");
-              //userElem.textContent = user.username;
-              
-           // Create a green circle element to indicate that the user is logged in
-const greenCircle = document.createElement("span");
-greenCircle.style.backgroundColor = "green";
-greenCircle.style.width = "10px";
-greenCircle.style.height = "10px";
-greenCircle.style.borderRadius = "50%";
-greenCircle.style.display = "inline-block";
-greenCircle.style.marginRight = "10px";
-greenCircle.style.marginLeft = "10px";
 
-// Add the green circle element to the user element before the username
-userElem.appendChild(greenCircle);
-userElem.appendChild(document.createTextNode(user.username));
+        userContainer.addEventListener("click", () => {
+          openChatWindow(user);
+          console.log("Clicked on user: " + user.username);
+          currentChatUser = user;
+        });
 
-
-              document.querySelector('.left-sidebar').style.display = 'block';
-              document.querySelector('.right-sidebar').style.display = 'block';
-              document.querySelector('.posts').style.display = 'block';
-              document.querySelector('.container').style.display = 'flex';
-              document.querySelector('.container').style.justifyContent = 'space-between';
-              document.querySelector('.container').style.marginTop = '20px';
-              document.querySelector('.container').style.flexWrap = 'wrap';
-              document.getElementById('login-form').style.display = 'none';
-              document.querySelector('.register-form').style.display = 'none';
-              document.getElementById('logged-in-message').style.display = 'block';
-              document.getElementById('logout-form').style.display = 'block';  
-              
-              // Add a click event listener to each user element that opens a chat window when clicked
-              userElem.addEventListener("click", () => {
-                openChatWindow(user);
-                console.log("Clicked on user: " + user.username);
-              });
-        
-              usersDiv.appendChild(userElem);
-              count++;
-            }
-          } 
-        }       
+        usersDiv.appendChild(userContainer);
+        count++;
       }
-  
-    });
-  
-    // Send a message to the server to request the list of users
-    message = JSON.stringify({ type: "get_users" });
-    socket.send(message);
-  
-    console.log("Display-users.js loaded Getting users from server...");
+    }
+  }
+});
+
+// event listener for when a logoutresponse is received
+socket.addEventListener("message", (event) => {
+  message = JSON.parse(event.data);
+
+  if (message.type === "logoutResponse") {
+    if (message.success) {
+      console.log("Logout successful");
+
+      moveUserToTop(message.username);
+    } else {
+      console.log("Logout failed");
+    }
+  }
+});
+
+message = JSON.stringify({ type: "get_users" });
+socket.send(message);
+
+console.log("Display-users.js loaded Getting users from server...");

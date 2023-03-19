@@ -92,7 +92,18 @@ VALUES
     (1, 1, 'admin', 'admin', 'admin@admin.com', 'fname', 'lname', 99, 'male', DateTime('now', 'localtime')),
     (2, 1, 'user', 'user', 'user@user.com', 'fname', 'lname', 11, 'female', DateTime('now', 'localtime')),
     (3, 1, 'user2', 'user2', 'user2@user2.com', 'fname2', 'lname2', 12, 'female', DateTime('now', 'localtime')),
-    (4, 1, 'user3', 'user3', 'user3@user3.com', 'fname3', 'lname3', 13, 'female', DateTime('now', 'localtime'));
+    (4, 1, 'user3', 'user3', 'user3@user3.com', 'fname3', 'lname3', 13, 'female', DateTime('now', 'localtime')),
+    (5, 1, 'alice', '1', 'alice@example.com', 'Alice', 'Anderson', 25, 'female', DateTime('now', 'localtime')),
+    (6, 1, 'brad', '1', 'brad@example.com', 'Brad', 'Baker', 27, 'male', DateTime('now', 'localtime')),
+    (7, 1, 'cindy', '1', 'cindy@example.com', 'Cindy', 'Carter', 29, 'female', DateTime('now', 'localtime')),
+    (8, 1, 'david', '1', 'david@example.com', 'David', 'Dixon', 33, 'male', DateTime('now', 'localtime')),
+    (9, 1, 'elizabeth', '1', 'elizabeth@example.com', 'Elizabeth', 'Edwards', 35, 'female', DateTime('now', 'localtime')),
+    (10, 1, 'frank', '1', 'frank@example.com', 'Frank', 'Fisher', 28, 'male', DateTime('now', 'localtime')),
+    (11, 1, 'grace', '1', 'grace@example.com', 'Grace', 'Graham', 24, 'female', DateTime('now', 'localtime')),
+    (12, 1, 'henry', '1', 'henry@example.com', 'Henry', 'Harrison', 36, 'male', DateTime('now', 'localtime')),
+    (13, 1, 'isabella', '1', 'isabella@example.com', 'Isabella', 'Iverson', 22, 'female', DateTime('now', 'localtime')),
+    (14, 1, 'james', '1', 'james@example.com', 'James', 'Jackson', 31, 'male', DateTime('now', 'localtime'));
+
 
 INSERT INTO category (id,category_name,descript,created_at)
 VALUES

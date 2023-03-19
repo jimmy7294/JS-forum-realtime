@@ -8,14 +8,13 @@
   --error-color: #851515;
 }
 
-  /* Hide divs */
-  .hide {
+/* Hide divs */
+.hide {
   display: none;
-  }
-  
-  
-  /* Global styles */
-  body {
+}
+
+/* Global styles */
+body {
   font-family: Arial, sans-serif;
   margin: 0;
   padding: 0;
@@ -23,176 +22,191 @@
   background-image: url("./bg.png");
   background-position: center;
   background-size: cover;
-  }
-  
-  /* Header styles */
-  .header {
+}
+
+/* Header styles */
+.header {
   color: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 10px;
-  }
-  
-  /* Container styles */
-  .container {
+}
+
+/* Container styles */
+.container {
   display: flex;
   justify-content: space-between;
   margin: 20px;
   color: #fff;
   flex-wrap: wrap;
 }
-  
-  /* Left sidebar styles */
-  .left-sidebar {
+
+/* Left sidebar styles */
+.left-sidebar {
+  margin-top: 50px;
   flex-basis: 20%;
-  }
-  
-  .left-sidebar h2 {
+}
+
+.left-sidebar h2 {
   margin-bottom: 10px;
-  }
-  
-  .left-sidebar ul {
+}
+
+.left-sidebar ul {
   list-style: none;
   margin-bottom: 20px;
   padding: 10px;
-  background-color: rgba(0,0,0,0.3);
+  background-color: rgba(0, 0, 0, 0.3);
   padding: 0;
   margin: 0;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   width: 50%;
-  }
-  
-  .left-sidebar li {
+}
+
+.left-sidebar li {
   margin-bottom: 5px;
-  }
-  
-  .left-sidebar a {
+}
+
+.left-sidebar a {
   color: var(--primary-color);
   text-decoration: none;
-  }
-  
-  /* Main content styles */
-  .main-content {
+}
+
+/* Main content styles */
+.main-content {
   flex-basis: 60%;
-  }
-  
-  .main-content h3 {
+}
+
+.main-content h3 {
   margin-bottom: 10px;
-  }
-  
-  .new-post-form {
+}
+
+/* User container styles */
+.user-container {
+  display: flex;
+  align-items: center;
+}
+
+/* Bubble styles */
+.bubble {
+  display: none;
+  margin-left: 5px;
+  width: 16px;
+  height: 16px;
+}
+
+.new-post-form {
   margin-bottom: 20px;
-  
-  }
-  
-  .new-post-form input,
-  .new-post-form textarea {
+}
+
+.new-post-form input,
+.new-post-form textarea {
   display: block;
   margin-bottom: 10px;
   width: 90%;
   padding: 5px;
   border: 1px solid #ccc;
-  }
-  
-  .new-post-form button {
+}
+
+.new-post-form button {
   background-color: var(--primary-color);
   color: #fff;
   border: none;
   padding: 5px 10px;
   cursor: pointer;
-  }
-  
-  .posts {
+}
+
+.posts {
   margin-bottom: 20px;
   width: 90%;
-  }
-  
-  .post {
+}
+
+.post {
   margin-bottom: 20px;
   padding: 10px;
-  background-color: rgba(0,0,0,0.3);
+  background-color: rgba(0, 0, 0, 0.3);
   padding: 0;
   margin: 0;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  }
-  
-  .post-title {
+}
+
+.post-title {
   margin: 0;
-  }
-  
-  .post-content {
+}
+
+.post-content {
   margin: 10px 0;
-  }
-  
-  .post-meta {
+}
+
+.post-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  }
-  
-  .post-meta button {
+}
+
+.post-meta button {
   background-color: var(--primary-color);
   color: #fff;
   border: none;
   padding: 5px 10px;
   cursor: pointer;
-  }
-  
-  .comments {
+}
+
+.comments {
   margin-top: 10px;
   padding-left: 20px;
-  }
-  
-  .comment {
+}
+
+.comment {
   margin-bottom: 10px;
   padding: 10px;
   border: 1px solid #ccc;
-  }
-  
-  .comment-content {
+}
+
+.comment-content {
   margin: 0;
-  }
-  
-  .comment-meta {
+}
+
+.comment-meta {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  }
-  
-  .comment-meta span {
+}
+
+.comment-meta span {
   font-size: 12px;
   color: #666;
-  }
-  
-  /* Right sidebar styles */
-  .right-sidebar {
+}
+
+/* Right sidebar styles */
+.right-sidebar {
+  margin-top: 50px;
   flex-basis: 20%;
-  }
-  
-  .right-sidebar h2 {
+}
+
+.right-sidebar h2 {
   margin-bottom: 10px;
-  }
-  
-  .right-sidebar ul {
+}
+
+.right-sidebar ul {
   list-style: none;
   margin: 0;
   padding: 0;
-  }
-  
-  .right-sidebar li {
+}
+
+.right-sidebar li {
   margin-bottom: 5px;
-  }
-  
-  .right-sidebar a {
+}
+
+.right-sidebar a {
   color: var(--primary-color);
   text-decoration: none;
-  }
-  
-  /* Login form */
-  .login-form {
+}
+
+/* Login form */
+.login-form {
   max-width: 300px;
   margin: 0 auto;
   padding: 20px;
@@ -203,67 +217,67 @@
 }
 
 .login-form label {
-display: block;
-margin-bottom: 10px;
-font-weight: bold;
-color: #020202;
-}
-
-.login-form input {
-width: 100%;
-padding: 10px;
-border: 1px solid #760fca;
-border-radius: 5px;
-margin-bottom: 20px;
-box-sizing: border-box;
-}
-
-.login-form button {
-display: block;
-width: 100%;
-padding: 10px;
-border: none;
-border-radius: 5px;
-background-color: var(--primary-color);
-color: #000000;
-font-size: 16px;
-cursor: pointer;
-}
-
-.login-form button#register-button {
-background-color: var(--quaternary-color);
-margin-top: 10px;
-}
-
-  /* Register form */
-  .register-form {
-    max-width: 300px;
-    margin: 0 auto;
-    padding: 20px;
-    margin-top: 50px;
-    border: 1px solid #ccc;
-    border-radius: 10;
-    background-color: var(--tertiary-color);
-  }
-  
-  .register-form label {
   display: block;
   margin-bottom: 10px;
   font-weight: bold;
   color: #020202;
-  }
-  
-  .register-form input,
-  .register-form select {
+}
+
+.login-form input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #760fca;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  box-sizing: border-box;
+}
+
+.login-form button {
+  display: block;
+  width: 100%;
+  padding: 10px;
+  border: none;
+  border-radius: 5px;
+  background-color: var(--primary-color);
+  color: #000000;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.login-form button#register-button {
+  background-color: var(--quaternary-color);
+  margin-top: 10px;
+}
+
+/* Register form */
+.register-form {
+  max-width: 300px;
+  margin: 0 auto;
+  padding: 20px;
+  margin-top: 50px;
+  border: 1px solid #ccc;
+  border-radius: 10;
+  background-color: var(--tertiary-color);
+}
+
+.register-form label {
+  display: block;
+  margin-bottom: 10px;
+  font-weight: bold;
+  color: #020202;
+}
+
+.register-form input,
+.register-form select {
   width: 100%;
   padding: 10px;
   border: 1px solid #ccc;
   border-radius: 5px;
   margin-bottom: 20px;
   box-sizing: border-box;
-  }
-  
-  .register-form button {
+}
+
+.register-form button {
   display: block;
   width: 100%;
   padding: 10px;
@@ -273,48 +287,48 @@ margin-top: 10px;
   color: #020202;
   font-size: 16px;
   cursor: pointer;
-  }
-  
-  .register-form button#register-button {
+}
+
+.register-form button#register-button {
   background-color: var(--quaternary-color);
   margin-top: 10px;
-  }
+}
 
-  .register-form button#login-switch-button {
-    background-color: var(--quaternary-color);  
-    margin-top: 10px;
-    }
-  
-  /* Registration success message  that appears in the middle of the screen*/
-  #registration-success {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--primary-color);
-    color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
-  }
+.register-form button#login-switch-button {
+  background-color: var(--quaternary-color);
+  margin-top: 10px;
+}
 
-  /* Registration error message that appears in the middle of the screen that matches the size of the register-form */
-  #registration-error {
-    font-family: Fira Code, monospace;
-    font-size: 25px;
-    width: 300px;
-    height: 100px;
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    background-color: var(--error-color);
-    color: #fff;
-    padding: 20px;
-    border-radius: 5px;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
-  }
-  
+/* Registration success message  that appears in the middle of the screen*/
+#registration-success {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--primary-color);
+  color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+}
+
+/* Registration error message that appears in the middle of the screen that matches the size of the register-form */
+#registration-error {
+  font-family: Fira Code, monospace;
+  font-size: 25px;
+  width: 300px;
+  height: 100px;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--error-color);
+  color: #fff;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+}
+
 /* Chat window styles */
 .chat-window {
   position: fixed;
@@ -330,14 +344,12 @@ margin-top: 10px;
   flex-direction: column;
 }
 
-
 .chat-container {
   position: relative;
   padding: 10px;
   flex-grow: 1;
   overflow-y: scroll;
 }
-
 
 /* Chat header styles */
 .chat-header {
@@ -369,7 +381,6 @@ margin-top: 10px;
 .chat-window {
   bottom: 60px;
 }
-
 
 .message {
   margin-bottom: 10px;
@@ -415,6 +426,14 @@ margin-top: 10px;
   padding: 5px 10px;
   cursor: pointer;
 }
+
+.timestamp {
+  display: block;
+  font-size: 0.8em;
+  color: #999;
+  margin-bottom: 3px;
+}
+
 .typing-indicator {
   display: flex;
   justify-content: center;
@@ -428,7 +447,6 @@ margin-top: 10px;
   /* Rotate the typing indicator vertical */
   writing-mode: vertical-rl;
   text-orientation: mixed;
-
 }
 
 .typing-dot {
@@ -448,7 +466,8 @@ margin-top: 10px;
 }
 
 @keyframes dot-bounce {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0) scale(1);
   }
   50% {
@@ -457,14 +476,25 @@ margin-top: 10px;
   }
 }
 
-#user-list, #offline-list {
+#user-list,
+#offline-list {
   list-style: none;
-  background-color: rgba(0,0,0,0.3);
-  padding: 0;
+  background-color: rgba(0, 0, 0, 0.3);
+  padding: 5px;
   margin: 0;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   width: 60%;
+  margin: 0 auto;
+  margin-top: 20px;
+}
+
+#offline-list {
+  max-height: 180px;
+  overflow-y: auto;
+}
+#offline-list::-webkit-scrollbar {
+  width: 0;
 }
 
 #logged-in-message {
@@ -490,6 +520,7 @@ margin-top: 10px;
   cursor: pointer;
   border-radius: 5px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+  margin-top: 5px;
 }
 
 /* Popup Container */
@@ -561,49 +592,160 @@ margin-top: 10px;
   z-index: 1;
   left: 50%;
   top: 50%;
-  width: 50%;
-  height: 50%;
+  width: 65%;
+  height: auto;
+  max-height: 90%;
   transform: translate(-50%, -50%);
   overflow: auto;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-color: transparent;
   color: #fff;
 }
 
-
 .comments-modal-content {
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.4);
-  border-radius: 5px;
+  color: #000;
+  background-color: transparent;
+  border-radius: 10px;
   box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
   margin: 15% auto;
   padding: 20px;
   border: 1px solid #888;
-  width: 80%;
+  width: 100%;
+  overflow-y: auto;
+  scrollbar-width: none; /* For Firefox */
 }
 
-.comment {
-  margin-bottom: 10px;
-  width: 80%;
+.comments-modal-content::-webkit-scrollbar {
+  display: none; /* For Webkit browsers (Chrome, Safari, etc.) */
 }
 
 .close-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  font-size: 20px;
+  color: #aaa;
+  font-size: 28px;
   font-weight: bold;
-  color: var(--secondary-color);
   cursor: pointer;
 }
 
-.close-btn:hover,
-.close-btn:focus {
-  color: #000;
-  text-decoration: none;
+#comments-list {
+  list-style: none;
+  margin: 0 1em;
+  font-family: Arial, sans-serif;
+  max-height: 500px; /* Adjust this value based on the desired maximum height */
+  overflow-y: auto;
+  scrollbar-width: none; /* For Firefox */
+}
+
+#comments-list::-webkit-scrollbar {
+  display: none; /* For Webkit browsers (Chrome, Safari, etc.) */
+}
+
+#comments-list blockquote {
+  color: white;
+  background-color: rgba(5, 3, 29, 0.8);
+  clear: both;
+  font-style: normal;
+  margin: 0 0 20px 0;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+#comments-list footer {
+  color: #ffffff;
+  padding: 0.5em 1em 0 0;
+  text-align: right;
+}
+
+#comments-list li:nth-child(2n) blockquote {
+  background-color: rgba(32, 52, 66, 0.8);
+}
+
+/* Add a Comment */
+#add-comment label {
+  clear: left;
+  float: left;
+  text-align: left;
+  width: 150px;
+}
+#add-comment input[type="text"],
+#add-comment input[type="email"],
+#add-comment input[type="url"] {
+  float: left;
+  width: 200px;
+}
+
+#add-comment textarea {
+  float: left;
+  height: 150px;
+  width: 495px;
+}
+
+#add-comment p.req {
+  clear: both;
+  margin: 0 0.5em 1em 0;
+  text-align: right;
+}
+
+#add-comment input[type="submit"] {
+  background-color: #265285;
+  color: white;
+  border: none;
+  border-radius: 5px;
+  padding: 10px 20px;
+  text-transform: uppercase;
   cursor: pointer;
 }
 
-.new-comment-input {
-  width: 80%;
-  margin-bottom: 10px;
+#add-comment input[type="submit"]:hover {
+  background-color: #236992;
+}
+
+#comments {
+  background: #fff;
+  margin-bottom: 2em;
+  overflow: hidden;
+  padding: 20px 20px;
+  width: 760px;
+  border-radius: 10px;
+}
+
+#comments label {
+  display: block;
+}
+
+#comments label:after {
+  content: " *";
+}
+
+#comments ol li:nth-child(2n + 1) {
+  background-color: #928543;
+}
+
+#respond {
+  background-color: rgba(0, 0, 0, 0.8);
+  color: white;
+  margin-top: 20px;
+  display: flex;
+  justify-content: flex-end;
+  margin-right: 30px;
+  width: 100%;
+}
+
+.input-container {
+  display: flex;
+  background-color: transparent;
+  padding-left: 80%;
+  justify-content: space-between;
+  align-items: center;
+}
+
+#login-error,
+#login-error2 {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: var(--primary-color);
+  color: #0f7299;
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
 }

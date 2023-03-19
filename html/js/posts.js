@@ -8,22 +8,48 @@ function requestComments(postId) {
     type: "get_comments",
     data: {
       content: postId,
-      username: document.getElementById('username').value,
+      username: document.getElementById("username").value,
     },
   };
 
- 
   // send the message object as a JSON string to the server
   console.log("Sending message to server", message);
   socket.send(JSON.stringify(message));
 }
 
+// Just a fancy way to scroll to the bottom of the comments list when the modal is opened (We dont need this i just like it //MVH Mathisen)
+function scrollToBottom(element, abortCallback) {
+  const scrollDuration = 10000; // Duration in milliseconds
+  const step = 1; // Step in milliseconds
+  const initialScrollTop = element.scrollTop;
+  const scrollHeight = element.scrollHeight;
+  const scrollDistance = scrollHeight - initialScrollTop;
+  let startTime = null;
+
+  const scrollStep = (timestamp) => {
+    if (startTime === null) startTime = timestamp;
+    const progress = timestamp - startTime;
+    const newScrollTop = initialScrollTop + (scrollDistance * progress) / scrollDuration;
+    element.scrollTop = newScrollTop;
+
+    if (abortCallback() || progress >= scrollDuration) {
+      // Abort scrolling or finish scrolling
+      element.scrollTop = scrollHeight;
+    } else {
+      requestAnimationFrame(scrollStep);
+    }
+  };
+
+  requestAnimationFrame(scrollStep);
+}
+
 function openCommentsModal(comments) {
   console.log("Opening comments modal for post", comments);
+
   // Create a modal to display the comments and the input field for new comments
   const modal = document.createElement("div");
   modal.classList.add("comments-modal");
-  modal.style.display = 'block';
+  modal.style.display = "block";
 
   // Add a close button to the modal
   const closeButton = document.createElement("button");
@@ -35,43 +61,51 @@ function openCommentsModal(comments) {
   modal.appendChild(closeButton);
 
   // Display the comments
-  const commentsDiv = document.createElement("div");
-  commentsDiv.classList.add("comments");
-  modal.appendChild(commentsDiv);
+  const commentsList = document.createElement("ol");
+  commentsList.setAttribute("id", "comments-list");
+  modal.appendChild(commentsList);
 
   if (comments) {
     for (const comment of comments) {
-      const commentDiv = document.createElement("div");
-      commentDiv.classList.add("comment");
+      const commentListItem = document.createElement("li");
+      const blockquote = document.createElement("blockquote");
 
       const commentContent = document.createElement("p");
-      commentContent.classList.add("comment-content");
       commentContent.textContent = comment.content;
 
-      const commentAuthor = document.createElement("span");
-      commentAuthor.classList.add("comment-author");
-      commentAuthor.textContent = `Comment by ${comment.username}`;
+      const commentFooter = document.createElement("footer");
+      commentFooter.textContent = `Comment by ${comment.username}`;
 
-      commentDiv.appendChild(commentContent);
-      commentDiv.appendChild(commentAuthor);
-
-      commentsDiv.appendChild(commentDiv);
+      blockquote.appendChild(commentContent);
+      blockquote.appendChild(commentFooter);
+      commentListItem.appendChild(blockquote);
+      commentsList.appendChild(commentListItem);
     }
   } else {
     const noCommentsDiv = document.createElement("div");
     noCommentsDiv.classList.add("no-comments");
     noCommentsDiv.textContent = "No comments yet.";
-    commentsDiv.appendChild(noCommentsDiv);
+    commentsList.appendChild(noCommentsDiv);
   }
 
-  // Add an input field for new comments
+  // Add a textarea for new comments
   const newCommentForm = document.createElement("form");
-  newCommentForm.classList.add("new-comment-form");
-  const newCommentInput = document.createElement("input");
-  newCommentInput.classList.add("new-comment-input");
-  newCommentInput.type = "text";
-  newCommentInput.placeholder = "Write a comment...";
-  newCommentForm.appendChild(newCommentInput);
+  newCommentForm.setAttribute("id", "add-comment");
+
+  const inputContainer = document.createElement("div");
+  inputContainer.classList.add("input-container");
+
+  const newCommentTextarea = document.createElement("input");
+  newCommentTextarea.setAttribute("id", "respond");
+  newCommentTextarea.placeholder = "Write a comment...";
+  inputContainer.appendChild(newCommentTextarea);
+
+  const submitButton = document.createElement("input");
+  submitButton.type = "submit";
+  submitButton.value = "Submit";
+  inputContainer.appendChild(submitButton);
+
+  newCommentForm.appendChild(inputContainer);
 
   newCommentForm.onsubmit = (event) => {
     event.preventDefault();
@@ -80,7 +114,7 @@ function openCommentsModal(comments) {
     const message = {
       type: "new_comment",
       data: {
-        content: newCommentInput.value,
+        content: newCommentTextarea.value,
         username: sessionStorage.getItem("username"),
         postid: sessionStorage.getItem("postID"),
       },
@@ -91,129 +125,147 @@ function openCommentsModal(comments) {
     console.log("Sending new comment to server", message);
 
     // update the comments list
-    const commentDiv = document.createElement("div");
-    commentDiv.classList.add("comment");
+    const commentListItem = document.createElement("li");
+    const blockquote = document.createElement("blockquote");
 
     const commentContent = document.createElement("p");
-    commentContent.classList.add("comment-content");
-    commentContent.textContent = newCommentInput.value;
+    commentContent.textContent = newCommentTextarea.value;
 
-    const commentAuthor = document.createElement("span");
-    commentAuthor.classList.add("comment-author");
-    commentAuthor.textContent = `Comment by ${document.getElementById('username').value}`;
+    const commentFooter = document.createElement("footer");
+    commentFooter.textContent = `Comment by ${
+      document.getElementById("username").value
+    }`;
 
-    commentDiv.appendChild(commentContent);
-    commentDiv.appendChild(commentAuthor);
+    blockquote.appendChild(commentContent);
+    blockquote.appendChild(commentFooter);
+    commentListItem.appendChild(blockquote);
+    commentsList.appendChild(commentListItem);
 
-    commentsDiv.appendChild(commentDiv);
-
-    // Reset the input field
-    newCommentInput.value = "";
+    // Reset the textarea
+    newCommentTextarea.value = "";
   };
 
   modal.appendChild(newCommentForm);
 
-  // Add the modal to the body
-  document.body.appendChild(modal);
-}
+   // Add the modal to the body
+   document.body.appendChild(modal);
 
-    // Listen for new messages from the server
-    socket.addEventListener("message", (event) => {
-      message = JSON.parse(event.data);
-      // console.log("Received message from server: ", message);
+   let userInteracted = false;
+   const abortScrolling = () => userInteracted;
+ 
+   // Scroll to the bottom of the comments list
+   scrollToBottom(commentsList, abortScrolling);
+ 
+   // Listen for user interaction to abort scrolling
+   modal.addEventListener("mousedown", () => {
+     userInteracted = true;
+   });
+   modal.addEventListener("keydown", () => {
+     userInteracted = true;
+   });
+ }
 
-      if (message.type === "comments") {
-        console.log("Received comments from server", message.comment);
-        const postId = message.comment.content;
-        const comments = message.comment;
-        openCommentsModal(comments);
-      }    
-  
-      if (message.type === "posts") {
-        // Update the posts list
-        const postsDiv = document.querySelector(".posts");
-        console.log("Received posts from server", message.posts);
-        // Clear the posts list before adding new posts
-        postsDiv.innerHTML = "<h1 style=\"font-family: 'Roboto Mono', monospace; font-weight: bold; font-size: 30px;\">Recent Posts</h1>";
+// Listen for new messages from the server
+socket.addEventListener("message", (event) => {
+  message = JSON.parse(event.data);
+  // console.log("Received message from server: ", message);
 
-        if (message.posts) {
-          for (const post of message.posts) {
-            const postDiv = document.createElement("div");
-            postDiv.classList.add("post");
+  if (message.type === "comments") {
+    console.log("Received comments from server", message.comment);
+    const postId = message.comment.content;
+    const comments = message.comment;
+    openCommentsModal(comments);
+  }
 
-            const hr2 = document.createElement("hr");
-            postDiv.appendChild(hr2);
-  
-            const postTitle = document.createElement("h4");
-            postTitle.classList.add("post-title");
-            postTitle.textContent = post.title;
-  
-            const postContent = document.createElement("p");
-            postContent.classList.add("post-content");
-            postContent.textContent = post.content;
-  
-            const postMeta = document.createElement("div");
-            postMeta.classList.add("post-meta");
-            postMeta.textContent = `Category: ${post.category}`;
-  
-            const postAuthor = document.createElement("span");
-            postAuthor.classList.add("post-author");
-            postAuthor.textContent = `Posted by: ${post.username}`;
+  if (message.type === "posts") {
+    // Update the posts list
+    const postsDiv = document.querySelector(".posts");
+    //console.log("Received posts from server", message.posts);
+    // Clear the posts list before adding new posts
+    postsDiv.innerHTML =
+      "<h1 style=\"font-family: 'Roboto Mono', monospace; font-weight: bold; font-size: 30px;\">Recent Posts</h1>";
 
-            //convert timestamp to date
-            const date = new Date(post.createdat);
-  
-            const postDate = document.createElement("span");
-            postDate.classList.add("post-date");
-            postDate.textContent = `Post created: ${date.toDateString()}`;
+    if (message.posts) {
+      for (const post of message.posts) {
+        const postDiv = document.createElement("div");
+        postDiv.classList.add("post");
 
-            const commentButton = document.createElement("button");
-            commentButton.classList.add("comment-btn");
-            commentButton.textContent = "Comment";
-            commentButton.onclick = () => requestComments(post.title);
-  
-            postMeta.appendChild(postAuthor);
-            postMeta.appendChild(postDate);
-            postMeta.appendChild(commentButton);
-            
+        const hr2 = document.createElement("hr");
+        postDiv.appendChild(hr2);
 
-            postDiv.appendChild(postTitle);
-            postDiv.appendChild(postContent);
-            postDiv.appendChild(postMeta);
-            
-            //add hr after each post
-            const br = document.createElement("br");
-            postDiv.appendChild(br);
-            const hr = document.createElement("hr");
-            postDiv.appendChild(hr);
-  
-            postsDiv.appendChild(postDiv);
-            // console.log("Received posts from server", message.posts);
-            
+        const postTitle = document.createElement("h4");
+        postTitle.classList.add("post-title");
+        postTitle.textContent = post.title;
 
-            document.querySelector('.left-sidebar').style.display = 'block';
-            document.querySelector('.right-sidebar').style.display = 'block';
-            document.querySelector('.posts').style.display = 'block';
-            document.querySelector('.container').style.display = 'flex';
-            document.getElementById('login-form').style.display = 'none';
-            document.querySelector('.register-form').style.display = 'none';
-            document.getElementById('logged-in-message').style.display = 'block';
-            document.getElementById('logout-form').style.display = 'block';
-          }
-        }
-        else {
-          const noPostsDiv = document.createElement("div");
-          noPostsDiv.textContent = "Please login to see posts";
-          postsDiv.appendChild(noPostsDiv);
-          // hide the new-post-form 
-            document.querySelector(".new-post-form").style.display = "none";
-        }
+        const postContent = document.createElement("p");
+        postContent.classList.add("post-content");
+        postContent.textContent = post.content;
+
+        const postMeta = document.createElement("div");
+        postMeta.classList.add("post-meta");
+        postMeta.textContent = `Category: ${post.category}`;
+
+        const postAuthor = document.createElement("span");
+        postAuthor.classList.add("post-author");
+        postAuthor.textContent = `Posted by: ${post.username}`;
+
+        //convert timestamp to date
+        const date = new Date(post.createdat);
+
+        const postDate = document.createElement("span");
+        postDate.classList.add("post-date");
+        postDate.textContent = `Post created: ${date.toDateString()}`;
+
+        const commentButton = document.createElement("button");
+        commentButton.classList.add("comment-btn");
+        commentButton.textContent = "Comment";
+        commentButton.onclick = () => requestComments(post.title);
+
+        postMeta.appendChild(postAuthor);
+        postMeta.appendChild(postDate);
+        postMeta.appendChild(commentButton);
+
+        postDiv.appendChild(postTitle);
+        postDiv.appendChild(postContent);
+        postDiv.appendChild(postMeta);
+
+        //add hr after each post
+        const br = document.createElement("br");
+        postDiv.appendChild(br);
+        const hr = document.createElement("hr");
+        postDiv.appendChild(hr);
+
+        postsDiv.appendChild(postDiv);
+        // console.log("Received posts from server", message.posts);
+
+        document.querySelector(".left-sidebar").style.display = "block";
+        document.querySelector(".right-sidebar").style.display = "block";
+        document.querySelector(".posts").style.display = "block";
+        document.querySelector(".container").style.display = "flex";
+        document.getElementById("login-form").style.display = "none";
+        document.querySelector(".register-form").style.display = "none";
+        document.getElementById("logged-in-message").style.display = "block";
+        document.getElementById("logout-form").style.display = "block";
       }
-    });
-  
-    // Send a message to the server to request the list of posts
-    message = JSON.stringify({ type: "get_posts" });
-    socket.send(message);
-    console.log("Sending get_posts to server", message)
+    } else {
+      const noPostsDiv = document.createElement("div");
+      noPostsDiv.textContent = "Please login to see posts";
+      postsDiv.appendChild(noPostsDiv);
+      // hide the new-post-form
+      document.querySelector(".new-post-form").style.display = "none";
+    }
+  }
+});
 
-    console.log("Posts.js loaded Getting posts from server...");
+//event listener for keypresses to aboirt scrolling
+window.addEventListener("keydown", () => {
+  //stop scrollStep requestAnimationFrame loop
+  cancelAnimationFrame(scrollStep);
+});
+
+// Send a message to the server to request the list of posts
+message = JSON.stringify({ type: "get_posts" });
+socket.send(message);
+//console.log("Sending get_posts to server", message)
+
+console.log("Posts.js loaded Getting posts from server...");

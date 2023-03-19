@@ -1,5 +1,4 @@
-// Establish a WebSocket connection to the backend
-//const socket = new WebSocket("ws://localhost:8080/ws");
+let currentChatUser = null;
 
 // When the WebSocket connection is opened
 socket.addEventListener("open", (event) => {
@@ -9,54 +8,65 @@ socket.addEventListener("open", (event) => {
   socket.addEventListener("message", (event) => {
     console.log("Message received from server: " + event.data);
     const message = JSON.parse(event.data);
-
+  
     if (message.type === "users") {
       // Update the user list
       const usersDiv = document.getElementById("user-list");
       // Clear the user list before adding new users
       usersDiv.innerHTML = "<h2>Logged In Users</h2>";
-    
-      if (message.type === "users") {
-        // Update the user list
-        const usersDiv = document.getElementById("user-list");
-        // Clear the user list before adding new users
-        usersDiv.innerHTML = "<h2>Logged In Users</h2>";
-      
-        if (message.users) {
-          let count = 0;
-          for (const user of message.users) {
-            if (count >= 10) {
-              break; // Limit the list to a maximum of 10 users
-            }
-            const userElem = document.createElement("div");
-            userElem.textContent = user.username;
-            
-            // Create a green circle element to indicate that the user is logged in
-            const greenCircle = document.createElement("span");
-            greenCircle.style.backgroundColor = "green";
-            greenCircle.style.width = "10px";
-            greenCircle.style.height = "10px";
-            greenCircle.style.borderRadius = "50%";
-            greenCircle.style.display = "inline-block";
-            greenCircle.style.marginRight = "10px";
-            
-            // Add the green circle element to the user element
-            userElem.appendChild(greenCircle);
-
-            
-            // Add a click event listener to each user element that opens a chat window when clicked
-            userElem.addEventListener("click", () => {
-              openChatWindow(user);
-              console.log("Clicked on user: " + user.username);
-            });
-      
-            usersDiv.appendChild(userElem);
-            count++;
+  
+      if (message.users) {
+        let count = 0;
+        for (const user of message.users) {
+          if (count >= 10) {
+            break; // Limit the list to a maximum of 10 users
           }
-        } 
-      }       
+          const userContainer = document.createElement("div");
+          userContainer.className = "user-container";
+          const usernameElem = document.createElement("span");
+          usernameElem.className = "username";
+          usernameElem.textContent = user.username;
+          userContainer.appendChild(usernameElem);
+          
+  
+          // Create a green circle element to indicate that the user is logged in
+          const greenCircle = document.createElement("span");
+          greenCircle.style.backgroundColor = "green";
+          greenCircle.style.width = "10px";
+          greenCircle.style.height = "10px";
+          greenCircle.style.borderRadius = "50%";
+          greenCircle.style.display = "inline-block";
+          greenCircle.style.marginRight = "10px";
+  
+          // Add the green circle element to the user element
+          userElem.appendChild(greenCircle);
+  
+          // Add the gif only if the chat window is not open for this user
+          if (currentChatUser === null || currentChatUser.id !== user.id) {
+            const gif = document.createElement("img");
+            // add class to the gif
+            gif.className = "bubble";
+            gif.src = "css/bubble.gif";
+            gif.style.marginLeft = "10px";
+            const bubbleGif = document.createElement("img");
+            bubbleGif.src = "css/bubble.gif";
+            bubbleGif.className = "bubble";
+            bubbleGif.style.display = "none"; // Initially hidden
+            userContainer.appendChild(bubbleGif);            
+          }
+  
+          // Add a click event listener to each user element that opens a chat window when clicked
+          userElem.addEventListener("click", () => {
+            openChatWindow(user);
+            console.log("Clicked on user: " + user.username);
+            currentChatUser = user;
+          });
+  
+          usersDiv.appendChild(userContainer);
+          count++;
+        }
+      }
     }
-
   });
 
   // Send a message to the server to request the list of users

@@ -95,7 +95,7 @@ type Message struct {
 	// The username of the recipient of the message (if it is a private message)
 	RecipientUsername string
 	Content           string
-	CreatedAt         string
+	CreatedAt         string    `json:"createdat"`
 	From              string    `json:"from"`
 	Text              string    `json:"text"`
 	ChatHistory       []Message `json:"chathistory"`
@@ -127,6 +127,9 @@ type ServerMessage struct {
 	ChatHistory []Message         `json:"chathistory"`
 	Password    string            `json:"password"`
 	Data        map[string]string `json:"data"`
+	Start       int               `json:"start"`
+	Limit       int               `json:"limit"`
+	Offset      int               `json:"offset"`
 }
 
 type ServerCategory struct {

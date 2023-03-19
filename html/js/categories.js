@@ -74,12 +74,12 @@ socket.addEventListener("message", (event) => {
     // Update the categories list
     const categoriesUl = document.querySelector(".left-sidebar ul");
     // Clear the categories list before adding new categories
-    categoriesUl.innerHTML = "<h2>Categories</h2>";
+    categoriesUl.innerHTML = "";
 
     if (message.categories) {
       const categoriesUl = document.querySelector(".left-sidebar ul");
       // Clear the categories list before adding new categories
-      categoriesUl.innerHTML = "<h2>Categories</h2>";
+      categoriesUl.innerHTML = "";
       //clear the category select before adding new categories
       const categorySelect = document.querySelector("#category");
       categorySelect.innerHTML = "<option value=''>Select a category</option>";
@@ -106,7 +106,7 @@ socket.addEventListener("message", (event) => {
     else {
       const categoriesUl = document.querySelector(".left-sidebar ul");
       // Clear the categories list before adding new categories
-      categoriesUl.innerHTML = "<h2>Categories</h2>";
+      categoriesUl.innerHTML = "";
     
       const categoryLi = document.createElement("li");
       categoryLi.textContent = "Please login to see categories";

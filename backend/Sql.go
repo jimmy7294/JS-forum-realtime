@@ -200,13 +200,11 @@ func GetUserID(db *sql.DB, username string) string {
 }
 
 // Get chat history for a user from another user from the database
-func GetChatHistory(user string, from string) []Message {
-	fmt.Println(Green + "Server >> Getting chat history for user: " + user + " from user: " + from + Reset)
-	// Connect to database
+func GetChatHistory(user string, from string, offset int) []Message {
 	db := OpenDatabase()
 	defer db.Close()
-	// Get messages from database/persistent storage
-	rows, err := db.Query("SELECT from_user, to_user, is_read, message FROM message WHERE (from_user = ? AND to_user = ?) OR (from_user = ? AND to_user = ?)", user, from, from, user)
+
+	rows, err := db.Query("SELECT from_user, to_user, is_read, message, created_at FROM message WHERE (from_user = ? AND to_user = ?) OR (from_user = ? AND to_user = ?) ORDER BY created_at DESC LIMIT 10 OFFSET ?", user, from, from, user, offset)
 
 	if err != nil {
 		fmt.Printf(Red+"Server >> Error getting chat history: %s"+Reset, err)
@@ -214,21 +212,21 @@ func GetChatHistory(user string, from string) []Message {
 
 	messages := []Message{}
 	for rows.Next() {
-		// Read row data
 		var fromUser, toUser string
 		var isread int
 		var message string
-		err = rows.Scan(&fromUser, &toUser, &isread, &message)
+		var created_at string
+		err = rows.Scan(&fromUser, &toUser, &isread, &message, &created_at)
 		if err != nil {
 			fmt.Printf(Red+"Server >> Error reading chat history: %s"+Reset, err)
 		}
 
-		// Create Message object
 		msg := Message{
-			From: fromUser,
-			To:   toUser,
-			Read: isread,
-			Text: message,
+			From:      fromUser,
+			To:        toUser,
+			Read:      isread,
+			Text:      message,
+			CreatedAt: created_at,
 		}
 		messages = append(messages, msg)
 	}
