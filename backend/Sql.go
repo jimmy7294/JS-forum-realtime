@@ -185,6 +185,7 @@ func GetUser(db *sql.DB, userID int) (User, error) {
 	return user, nil
 }
 
+// Get user depending on username
 func GetUserID(db *sql.DB, username string) string {
 	// Prepare the SQL query to retrieve the user ID based on the username
 	query := "SELECT id FROM user WHERE username = ?"
@@ -197,6 +198,21 @@ func GetUserID(db *sql.DB, username string) string {
 	}
 
 	return userID
+}
+
+// Get username depending on userID
+func GetUsernameFromId(db *sql.DB, id string) string {
+	// Prepare the SQL query to retrieve the user ID based on the username
+	query := "SELECT username FROM user WHERE id = ?"
+
+	// Execute the query and retrieve the user ID
+	var username string
+	err := db.QueryRow(query, id).Scan(&username)
+	if err != nil {
+		fmt.Printf(Red+"Server >> Error getting user ID: %s"+Reset, err)
+	}
+
+	return username
 }
 
 // Get chat history for a user from another user from the database
@@ -220,6 +236,9 @@ func GetChatHistory(user string, from string, offset int) []Message {
 		if err != nil {
 			fmt.Printf(Red+"Server >> Error reading chat history: %s"+Reset, err)
 		}
+
+		toUser = GetUsernameFromId(db, toUser)
+		fromUser = GetUsernameFromId(db, fromUser)
 
 		msg := Message{
 			From:      fromUser,
@@ -369,7 +388,7 @@ func GetPostID(db *sql.DB, postTitle string) int {
 }
 
 func GetCategoryID(db *sql.DB, categoryName string) int {
-	fmt.Println("Category name: ", categoryName)
+	//fmt.Println("Category name: ", categoryName)
 	var categoryID int
 	err := db.QueryRow("select id from category where category_name = ?", categoryName).Scan(&categoryID)
 	if err != nil {
@@ -393,4 +412,56 @@ func AddPostCategoryRelation(db *sql.DB, postTitle string, categoryName string) 
 	}
 
 	fmt.Println(Green + "Server >> Post Category relation added to database" + Reset)
+}
+
+func GetUsernamebyEmail(db *sql.DB, email string) string {
+	fmt.Println("Getting username from email")
+	var username string
+
+	err := db.QueryRow("SELECT username FROM USER user WHERE email = ?", email).Scan(&username)
+	if err != nil {
+		fmt.Println("username cannot be retrieved")
+	}
+	return username
+}
+func GetPostsByCategory(db *sql.DB, category_name string) ([]Post, error) {
+	//fmt.Println("Category name: ", category_name)
+	// Update the query to join the post and category_relation tables and select the category_name
+	query := `SELECT p.id, p.user_id, p.title, p.content, p.created_at, u.username, c.category_name
+          FROM post p
+          JOIN user u ON p.user_id = u.id
+          JOIN category_relation cr ON p.id = cr.post_id
+          JOIN category c ON cr.category_id = c.id
+          WHERE c.category_name = ?
+          ORDER BY p.created_at DESC`
+
+	rows, err := db.Query(query, category_name)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []Post
+	for rows.Next() {
+		var p Post
+		err := rows.Scan(&p.ID, &p.UserID, &p.Title, &p.Content, &p.CreatedAt, &p.UserName, &p.CategoryName) // Add the CategoryName field
+		if err != nil {
+			return nil, err
+		}
+		posts = append(posts, p)
+	}
+
+	// update posts with correct username
+	for i := 0; i < len(posts); i++ {
+		temp, _ := GetUser(db, posts[i].UserID)
+		temp2 := string(temp.Username)
+		posts[i].UserName = temp2
+	}
+
+	// sort posts by date and time created (newest first)
+	sort.Slice(posts, func(i, j int) bool {
+		return posts[i].CreatedAt.After(posts[j].CreatedAt)
+	})
+
+	return posts, nil
 }

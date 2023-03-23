@@ -314,19 +314,15 @@ body {
 
 /* Registration error message that appears in the middle of the screen that matches the size of the register-form */
 #registration-error {
-  font-family: Fira Code, monospace;
-  font-size: 25px;
-  width: 300px;
-  height: 100px;
   position: fixed;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background-color: var(--error-color);
-  color: #fff;
+  background-color: rgba(92, 5, 5, 0.8);
+  color: #fdffff;
   padding: 20px;
   border-radius: 5px;
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.2);
+  box-shadow: 0 0 10px rgba(133, 5, 5, 0.3);
 }
 
 /* Chat window styles */
@@ -358,6 +354,18 @@ body {
   align-items: center;
   padding: 10px;
   background-color: var(--primary-color);
+  color: #fff;
+  font-weight: bold;
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+
+.chat-header-bot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px;
+  background-color : #c06108;
   color: #fff;
   font-weight: bold;
   border-top-left-radius: 5px;
@@ -409,14 +417,23 @@ body {
 
 .input-container {
   display: flex;
+  background-color: rgba(0, 0, 0, 0.8);
+  justify-content: center;
   align-items: center;
-  padding: 10px;
-  background-color: #f2f2f2;
+  width: 100%;
+  margin: 0 auto; /* Center the input container */
 }
 
-.input-container input[type="text"] {
+.textarea-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center; /* Center the label and textarea vertically */
+}
+
+.input-container textarea {
   flex-grow: 1;
   margin-right: 10px;
+  margin-bottom: 20px;
 }
 
 .input-container button {
@@ -425,6 +442,34 @@ body {
   border: none;
   padding: 5px 10px;
   cursor: pointer;
+}
+
+.input-container label {
+  display: block;
+  font-family: Fira Code, monospace;
+  font-size: 20px;
+  margin-bottom: 2px; /* Add space between label and textarea */
+}
+
+.input-container-chat button {
+  background-color: var(--primary-color);
+  color: #fff;
+  border: none;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+
+.input-container-chat {
+  display: flex;
+  background-color: rgba(0, 0, 0, 0.8);
+  width: 100%;
+  margin: 0 auto; /* Center the input container */
+  flex-direction: row;
+}
+
+.input-container-chat input {
+  width: 100%;
 }
 
 .timestamp {
@@ -729,16 +774,10 @@ body {
   width: 100%;
 }
 
-.input-container {
-  display: flex;
-  background-color: transparent;
-  padding-left: 80%;
-  justify-content: space-between;
-  align-items: center;
-}
-
 #login-error,
-#login-error2 {
+#login-error2,
+#login-error3,
+#login-error4 {
   position: fixed;
   top: 50%;
   left: 50%;

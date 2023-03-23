@@ -120,6 +120,7 @@ type ServerMessage struct {
 	Post        ServerPost        `json:"post"`
 	Category    ServerCategory    `json:"category"`
 	Comment     []ServerComment   `json:"comment"`
+	Message     string            `json:"message"`
 	To          string            `json:"to"`
 	From        string            `json:"from"`
 	Text        string            `json:"text"`

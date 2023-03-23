@@ -25,12 +25,18 @@ func StartWebSocketServer() {
 	upgrader := configureUpgrader()
 	http.HandleFunc("/ws", func(w http.ResponseWriter, r *http.Request) {
 		cookieValue := r.Header.Get("Cookie")
-		fmt.Println(Purple+"Server >> NEW websocket connection with Cookie value:", cookieValue+Reset)
+		if cookieValue != "" {
+			fmt.Println(Purple+"Server >> NEW websocket connection with Cookie value:", cookieValue+Reset)
+		} else {
+			fmt.Println(Purple + "Server >> NEW websocket connection with no Cookie value" + Reset)
+			// Mabe send a message to the client to tell them they are not logged in
+		}
 		conn, err := upgrader.Upgrade(w, r, nil)
 		if err != nil {
 			log.Println(err)
 			return
 		}
+
 		// Handle the new WebSocket connection
 		handleWebSocketConnection(conn, cookieValue)
 	})
@@ -79,6 +85,7 @@ func handleWebSocketConnection(conn *websocket.Conn, cookieValue string) {
 		}
 	} else {
 		fmt.Println(Purple + "Server >> User is not logged in" + Reset)
+		conn.WriteJSON(ServerMessage{Type: "status", Data: map[string]string{"refresh": "true"}})
 	}
 
 	// Create a new session for the WebSocket client
@@ -169,6 +176,8 @@ func handleWebSocketMessage(conn *websocket.Conn, message ServerMessage) {
 		handleTypingMessage(conn, message)
 	case "stopTyping":
 		handleStopTypingMessage(conn, message)
+	case "postsByCategory":
+		handleGetPostsForCategory(conn, message)
 	}
 }
 
@@ -280,7 +289,7 @@ func handleGetChatHistoryMessage(conn *websocket.Conn, message ServerMessage) {
 func handleMessageMessage(conn *websocket.Conn, message ServerMessage) {
 	//fmt.Println("Message received from ", message.From, " to ", message.To, ": ", message.Text)
 
-	message.Username = message.To
+	message.Username = message.From
 	// Add the message to the conversation history
 	//open db
 	db := OpenDatabase()
@@ -323,11 +332,22 @@ func handleLoginMessage(conn *websocket.Conn, message ServerMessage) {
 	username := message.Data["username"]
 	password := message.Data["password"]
 
+	if UsernameCheck(username) {
+		if !CheckIfEmailExist(db, username) {
+			fmt.Printf(Red+"Server >> User %s tried to login but! but does not exist!!!!!\n"+Reset, username)
+			conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"status": "error3", "message": "User does not Exist!"}})
+			conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"login": "false"}})
+			return
+		} else {
+			username = GetUsernamebyEmail(db, username) // transform username from email
+		}
+	}
+
 	// Check if the user exist in the database
 	if !CheckIfUserExist(db, username) {
 		// If the user exist, check if the password is correct
 		fmt.Printf(Red+"Server >> User %s tried to login but! but does not exist!!!!!\n"+Reset, username)
-		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"status": "error", "message": "User Exist!"}})
+		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"status": "error3", "message": "User does not Exist!"}})
 		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"login": "false"}})
 		return
 	}
@@ -335,7 +355,7 @@ func handleLoginMessage(conn *websocket.Conn, message ServerMessage) {
 	if !CheckIfPasswordIsCorrect(db, username, password) {
 		// If the user exist but the password is incorrect
 		fmt.Printf(Red+"Server >> User %s tried to login but the password is incorrect!\n"+Reset, username)
-		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"status": "error", "message": "Incorrect password"}})
+		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"status": "error4", "message": "Incorrect password"}})
 		conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"login": "false"}})
 		return
 	}
@@ -396,7 +416,7 @@ func handleLoginMessage(conn *websocket.Conn, message ServerMessage) {
 	}
 	LoggedInUsers[sessionToken] = session
 
-	conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"login": "true"}})
+	conn.WriteJSON(ServerMessage{Type: "loginResponse", Data: map[string]string{"login": "true", "username": username}})
 	fmt.Printf(Green+"Server >> User %s has logged in!\n"+Reset, username)
 
 }
@@ -514,6 +534,23 @@ func handleRegisterMessage(conn *websocket.Conn, message ServerMessage) { // we 
 		}
 		return
 	}
+	// Checks if the password has a minimum of 8 characters, contains at least one uppercase letter, one lowercase letter, and one number.
+	// to
+	if !CheckPasswordStrength(password) {
+		// If the password is not strong enough, redirect to the login page
+		fmt.Printf(Red+"Server >> User %s tried to register but the password is not strong enough!\n"+Reset, username)
+		if conn != nil {
+			conn.WriteJSON(ServerMessage{
+				Type: "registerResponse",
+				Data: map[string]string{
+					"register": "false",
+					"status":   "Password needs a minimum of 8 characters, contains at least one uppercase letter, one lowercase letter, and one number.",
+				},
+			})
+		}
+		return
+	}
+	// Check if the password and the password confirm are the same
 	if password != confirmpassword {
 		// Check if the password and the password confirm are the same
 		// If the password and the password confirm are not the same, redirect to the login page
@@ -681,4 +718,23 @@ func handleStopTypingMessage(conn *websocket.Conn, message ServerMessage) {
 
 	// send typing signal to the client
 	Broadcast <- ServerMessage{Type: "stopTyping", Data: map[string]string{"to": user, "from": message.Data["from"]}}
+}
+
+// get posts for categories
+func handleGetPostsForCategory(conn *websocket.Conn, message ServerMessage) {
+	//fmt.Println(message.Data["Text"])
+	//fmt.Println("Get posts for category message received")
+	var category = message.Data["Text"]
+	//open db
+	db := OpenDatabase()
+	defer db.Close()
+	// Get all the posts from the database and send them to the client
+	posts, _ := GetPostsByCategory(db, category)
+	postList := make([]ServerPost, len(posts))
+	for i, v := range posts {
+		postList[i] = ServerPost{ID: v.ID, Title: v.Title, Content: v.Content, CreatedAt: v.CreatedAt, UserID: v.UserID, UserName: v.UserName, CategoryName: v.CategoryName} // Add the CategoryName field
+	}
+
+	// send the posts to the client
+	conn.WriteJSON(ServerMessage{Type: "postsbyCategory", Posts: postList})
 }

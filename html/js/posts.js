@@ -1,6 +1,6 @@
 function requestComments(postId) {
   //save post title to global variable as a string
-  console.log("Requesting comments for post", postId);
+  //console.log("Requesting comments for post", postId);
   // save postID to session storage
   sessionStorage.setItem("postID", postId);
   // create a new message object
@@ -13,7 +13,7 @@ function requestComments(postId) {
   };
 
   // send the message object as a JSON string to the server
-  console.log("Sending message to server", message);
+  //console.log("Sending message to server", message);
   socket.send(JSON.stringify(message));
 }
 
@@ -29,7 +29,8 @@ function scrollToBottom(element, abortCallback) {
   const scrollStep = (timestamp) => {
     if (startTime === null) startTime = timestamp;
     const progress = timestamp - startTime;
-    const newScrollTop = initialScrollTop + (scrollDistance * progress) / scrollDuration;
+    const newScrollTop =
+      initialScrollTop + (scrollDistance * progress) / scrollDuration;
     element.scrollTop = newScrollTop;
 
     if (abortCallback() || progress >= scrollDuration) {
@@ -44,7 +45,7 @@ function scrollToBottom(element, abortCallback) {
 }
 
 function openCommentsModal(comments) {
-  console.log("Opening comments modal for post", comments);
+  //console.log("Opening comments modal for post", comments);
 
   // Create a modal to display the comments and the input field for new comments
   const modal = document.createElement("div");
@@ -65,8 +66,10 @@ function openCommentsModal(comments) {
   commentsList.setAttribute("id", "comments-list");
   modal.appendChild(commentsList);
 
-  if (comments) {
+  if (comments && comments.length != 0) {
+    //console.log("Comments found");
     for (const comment of comments) {
+      //console.log("Adding comment to modal", comment);
       const commentListItem = document.createElement("li");
       const blockquote = document.createElement("blockquote");
 
@@ -82,10 +85,20 @@ function openCommentsModal(comments) {
       commentsList.appendChild(commentListItem);
     }
   } else {
-    const noCommentsDiv = document.createElement("div");
-    noCommentsDiv.classList.add("no-comments");
-    noCommentsDiv.textContent = "No comments yet.";
-    commentsList.appendChild(noCommentsDiv);
+    //console.log("No comments yet");
+    const commentListItem = document.createElement("li");
+    const blockquote = document.createElement("blockquote");
+
+    const commentContent = document.createElement("p");
+    commentContent.textContent = "No comments yet for this post!";
+
+    const commentFooter = document.createElement("footer");
+    commentFooter.textContent = `Comment by Be the first to comment`;
+
+    blockquote.appendChild(commentContent);
+    blockquote.appendChild(commentFooter);
+    commentListItem.appendChild(blockquote);
+    commentsList.appendChild(commentListItem);
   }
 
   // Add a textarea for new comments
@@ -95,10 +108,21 @@ function openCommentsModal(comments) {
   const inputContainer = document.createElement("div");
   inputContainer.classList.add("input-container");
 
-  const newCommentTextarea = document.createElement("input");
+  const newCommentTextarea = document.createElement("textarea");
   newCommentTextarea.setAttribute("id", "respond");
   newCommentTextarea.placeholder = "Write a comment...";
-  inputContainer.appendChild(newCommentTextarea);
+  
+  const newCommentLabel = document.createElement("label");
+  newCommentLabel.setAttribute("for", "respond");
+  newCommentLabel.textContent = "Your comment";
+  newCommentLabel.style.fontSize = "16px";
+  
+  const textareaWrapper = document.createElement("div");
+  textareaWrapper.classList.add("textarea-wrapper");
+  textareaWrapper.appendChild(newCommentLabel);
+  textareaWrapper.appendChild(newCommentTextarea);
+  
+  inputContainer.appendChild(textareaWrapper);
 
   const submitButton = document.createElement("input");
   submitButton.type = "submit";
@@ -122,7 +146,7 @@ function openCommentsModal(comments) {
 
     // send the message object as a JSON string to the server
     socket.send(JSON.stringify(message));
-    console.log("Sending new comment to server", message);
+    //console.log("Sending new comment to server", message);
 
     // update the comments list
     const commentListItem = document.createElement("li");
@@ -143,27 +167,30 @@ function openCommentsModal(comments) {
 
     // Reset the textarea
     newCommentTextarea.value = "";
+
+    //scroll to bottom of comments list
+    scrollToBottom(commentsList, abortScrolling);
   };
 
   modal.appendChild(newCommentForm);
 
-   // Add the modal to the body
-   document.body.appendChild(modal);
+  // Add the modal to the body
+  document.body.appendChild(modal);
 
-   let userInteracted = false;
-   const abortScrolling = () => userInteracted;
- 
-   // Scroll to the bottom of the comments list
-   scrollToBottom(commentsList, abortScrolling);
- 
-   // Listen for user interaction to abort scrolling
-   modal.addEventListener("mousedown", () => {
-     userInteracted = true;
-   });
-   modal.addEventListener("keydown", () => {
-     userInteracted = true;
-   });
- }
+  let userInteracted = false;
+  const abortScrolling = () => userInteracted;
+
+  // Scroll to the bottom of the comments list
+  scrollToBottom(commentsList, abortScrolling);
+
+  // Listen for user interaction to abort scrolling
+  modal.addEventListener("mousedown", () => {
+    userInteracted = true;
+  });
+  modal.addEventListener("keydown", () => {
+    userInteracted = true;
+  });
+}
 
 // Listen for new messages from the server
 socket.addEventListener("message", (event) => {
@@ -171,7 +198,7 @@ socket.addEventListener("message", (event) => {
   // console.log("Received message from server: ", message);
 
   if (message.type === "comments") {
-    console.log("Received comments from server", message.comment);
+    //console.log("Received comments from server", message.comment);
     const postId = message.comment.content;
     const comments = message.comment;
     openCommentsModal(comments);
@@ -255,12 +282,6 @@ socket.addEventListener("message", (event) => {
       document.querySelector(".new-post-form").style.display = "none";
     }
   }
-});
-
-//event listener for keypresses to aboirt scrolling
-window.addEventListener("keydown", () => {
-  //stop scrollStep requestAnimationFrame loop
-  cancelAnimationFrame(scrollStep);
 });
 
 // Send a message to the server to request the list of posts

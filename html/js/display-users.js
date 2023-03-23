@@ -1,21 +1,17 @@
 let currentChatUser = null;
+let lastChatUser = null;
 
-// function to sort users in alphabetical order
+// function to sort users with the last chat user at the top, followed by alphabetical order
 function sortUsers(users) {
   return users.sort((a, b) => {
+    if (a.id === lastChatUser?.id) {
+      return -1;
+    }
+    if (b.id === lastChatUser?.id) {
+      return 1;
+    }
     return a.username.localeCompare(b.username);
   });
-}
-
-// function to sort users by last message
-function moveUserToTop(userId) {
-  const usersDiv = document.getElementById("user-list");
-  const userContainer = document.getElementById("user-" + userId);
-  //console.log("userContainer: ", userContainer)
-  if (userContainer) {
-    usersDiv.removeChild(userContainer);
-    usersDiv.insertBefore(userContainer, usersDiv.children[1]);
-  }
 }
 
 socket.addEventListener("message", (event) => {
@@ -23,9 +19,12 @@ socket.addEventListener("message", (event) => {
 
   if (message.type === "users") {
     const usersDiv = document.getElementById("user-list");
-    usersDiv.innerHTML = '';
+    usersDiv.innerHTML = "";
 
     if (message.users) {
+      // Add a our special realtime bot user
+      message.users.push({ id: "Special-Friend", username: "Special-Friend" });
+
       let count = 0;
       const sortedUsers = sortUsers(message.users);
       for (const user of sortedUsers) {
@@ -51,7 +50,7 @@ socket.addEventListener("message", (event) => {
         usernameElem.textContent = user.username;
         userContainer.appendChild(usernameElem);
 
-        // If the user has a last message, display it in the user list  (this is the last message they sent or received)
+        // If the user has a last message, display it in the user list (this is the last message they sent or received)
         if (currentChatUser === null || currentChatUser.id !== user.id) {
           const bubbleGif = document.createElement("img");
           bubbleGif.src = "css/bubble.gif";
@@ -61,7 +60,6 @@ socket.addEventListener("message", (event) => {
           //console.log("Added recipient ID: " + user.username)
           userContainer.appendChild(bubbleGif);
         }
-        
 
         userContainer.addEventListener("click", () => {
           openChatWindow(user);

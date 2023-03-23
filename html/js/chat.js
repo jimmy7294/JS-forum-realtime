@@ -3,14 +3,76 @@ let CurrentReceiver = "";
 let messageCount = 0;
 let lastMessageTime = Date.now();
 
+function displayMessageInChat(sender, messageText) {
+  const chatContainer = document.querySelector(".chat-container");
+
+  const messageContainer = document.createElement("div");
+  messageContainer.className = sender === "user" ? "message sent" : "message received";
+
+  const timestamp = document.createElement("small");
+  timestamp.className = "timestamp";
+  timestamp.textContent = new Date().toLocaleString(); // Set the current timestamp
+  messageContainer.appendChild(timestamp);
+
+  const messageElem = document.createElement("p");
+  messageElem.textContent = messageText;
+  messageContainer.appendChild(messageElem);
+
+  chatContainer.appendChild(messageContainer);
+  chatContainer.scrollTop = chatContainer.scrollHeight;
+}
+
+async function sendMessageToOpenAI(messageText) {
+  const apiKey = "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";
+  const prompt = `Your prompt text: ${messageText}`;
+
+  // Display the user's message in the chat window
+  displayMessageInChat("user", messageText);
+
+  try {
+    const response = await fetch("https://api.openai.com/v1/engines/text-davinci-003/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        prompt: prompt,
+        max_tokens: 100,
+        n: 1,
+        stop: null,
+        temperature: 1,
+      }),
+    });
+
+    const data = await response.json();
+    if (data.choices && data.choices.length > 0) {
+      // Handle the OpenAI API response
+      const botResponse = data.choices[0].text;
+      // Display the Bot's response in your chat window
+      displayMessageInChat("bot", botResponse);
+    }
+  } catch (error) {
+    console.error("Error while fetching data from OpenAI API:", error);
+  }
+}
+
 // Debounce function to prevent spamming the server with messages
 function debounce(func, wait) {
   let timeout;
+  let isCooldown = false;
+
   return function (...args) {
-    clearTimeout(timeout);
-    timeout = setTimeout(() => {
-      func.apply(this, args);
-    }, wait);
+    const context = this;
+
+    if (!isCooldown) {
+      func.apply(context, args);
+      isCooldown = true;
+
+      setTimeout(() => {
+        isCooldown = false;
+      }, wait);
+    }
   };
 }
 
@@ -18,7 +80,7 @@ function debounce(func, wait) {
 const debouncedSendMessage = (user, messageText) =>
   debounce(sendMessage, 1000)(user, messageText);
 
-// Throttle function to prevent spamming the server with messages
+// Throttle function to prevent loading all chat messages.
 function throttle(func, limit) {
   let lastFunc;
   let lastRan;
@@ -32,28 +94,58 @@ function throttle(func, limit) {
         if (Date.now() - lastRan >= limit) {
           func.apply(this, args);
           lastRan = Date.now();
+          console.log("Throttled function ran");
         }
       }, limit - (Date.now() - lastRan));
     }
   };
 }
 
+// function to sort users by last message
+function moveUserToTop(userId) {
+  console.log("Moving user to top: " + userId);
+  const usersDiv = document.getElementById("user-list");
+  const userContainer = document.getElementById("user-" + userId);
+  //console.log("userContainer: ", userContainer)
+  if (userContainer) {
+    console.log("userContainer: ", userContainer);
+    usersDiv.removeChild(userContainer);
+    usersDiv.insertBefore(userContainer, usersDiv.children[0]);
+  }
+}
+
 // shows a bubble when a user gets a message from another user (if the chat window is not open)
 function showBubbleGif(recipientId) {
   //console.log("Showing bubble gif for recipient " + recipientId);
-  var bubbles = document.querySelectorAll('.bubble[data-recipient="' + recipientId + '"]');
+  var bubbles = document.querySelectorAll(
+    '.bubble[data-recipient="' + recipientId + '"]'
+  );
   for (var i = 0; i < bubbles.length; i++) {
-    bubbles[i].style.display = 'block';
+    bubbles[i].style.display = "block";
+    moveUserToTop(recipientId);
   }
 }
 
 // hides a bubble when a user gets a message from another user (if the chat window is open)
 function hideBubbleGif(recipientId) {
   //console.log("Showing bubble gif for recipient " + recipientId);
-  var bubbles = document.querySelectorAll('.bubble[data-recipient="' + recipientId + '"]');
+  var bubbles = document.querySelectorAll(
+    '.bubble[data-recipient="' + recipientId + '"]'
+  );
   for (var i = 0; i < bubbles.length; i++) {
-    bubbles[i].style.display = 'none';
+    bubbles[i].style.display = "none";
   }
+}
+
+// function to standardize the message text
+function standardizeInput(message) {
+  // remove leading and trailing spaces
+  message = message.trim();
+
+  // remove any extra spaces between words
+  message = message.replace(/\s+/g, " ");
+
+  return message;
 }
 
 // Create a chat window element and append it to the DOM
@@ -75,6 +167,88 @@ for (let i = 0; i < 3; i++) {
 
 // Create a container for the chat window header and the typing indicator
 function openChatWindow(user) {
+  console.log("The user is: ", user);
+  if (user.username === "Special-Friend") {
+    // Create a header container for the chat window
+    const headerContainer = document.createElement("div");
+    headerContainer.className = "header-container";
+    headerContainer.style.position = "sticky";
+    // Set the top position of the header container to 0 so that it sticks to the top of the chat window
+    headerContainer.style.top = "0";
+    headerContainer.style.zIndex = "1";
+
+    // Create a header for the chat window
+    const chatHeader = document.createElement("div");
+    chatHeader.className = "chat-header-bot";
+    chatHeader.textContent = "Dont be lonely, talk to me!";
+
+    headerContainer.appendChild(chatHeader);
+
+    // Create a close button for the chat window
+    const closeButton = document.createElement("button");
+    closeButton.textContent = "X";
+    closeButton.addEventListener("click", () => {
+      chatWindow.innerHTML = "";
+      lastChatUser = currentChatUser;
+      currentChatUser = null;
+      // Remove the chat-window class from the chat window
+      chatWindow.classList.remove("chat-window");
+    });
+
+    // Append the close button to the chat header
+    chatHeader.appendChild(closeButton);
+
+    // Create a container for the chat messages
+    const chatContainer = document.createElement("div");
+    chatWindow.classList.add("chat-window"); // Add the chat-window class
+    chatContainer.className = "chat-container";
+
+    // Create a container for the message input and send button
+    const inputContainer = document.createElement("div");
+    inputContainer.className = "input-container-chat";
+
+    // Create the message input field
+    const messageInput = document.createElement("input");
+    messageInput.type = "text";
+    messageInput.placeholder = "Type your message...";
+    inputContainer.appendChild(messageInput);
+
+    messageInput.addEventListener("keydown", async (event) => {
+      if (event.key === "Enter") {
+        // Prevent the default behavior of the Enter key, which is to add a new line
+        event.preventDefault();
+        // Call the sendMessageToOpenAI function to send the message
+        await sendMessageToOpenAI(messageInput.value);
+        // Clear the message input field
+        messageInput.value = "";
+      }
+      // Scroll to the bottom of the chat window
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+    });
+
+    // Create the send button
+    const sendButton = document.createElement("button");
+    sendButton.textContent = "Send";
+    sendButton.addEventListener("click", async () => {
+      await sendMessageToOpenAI(messageInput.value);
+      console.log("Sending message: " + messageInput.value);
+      // Clear the message input field
+      messageInput.value = "";
+    });
+    inputContainer.appendChild(sendButton);
+
+    // Add the header container, chat container, and input container to the chat window
+    chatWindow.innerHTML = "";
+    chatWindow.appendChild(headerContainer);
+    chatWindow.appendChild(chatContainer);
+    chatWindow.appendChild(inputContainer);
+
+    // Scroll to the bottom of the chat window
+    chatContainer.scrollTop = chatContainer.scrollHeight;
+
+    //stop function
+    return;
+  }
   hideBubbleGif(user.username);
   console.log("Opening chat window with user: " + user.username);
 
@@ -105,6 +279,8 @@ function openChatWindow(user) {
     closeButton.textContent = "X";
     closeButton.addEventListener("click", () => {
       chatWindow.innerHTML = "";
+      lastChatUser = currentChatUser;
+      currentChatUser = null;
       // Remove the chat-window class from the chat window
       chatWindow.classList.remove("chat-window");
     });
@@ -122,10 +298,17 @@ function openChatWindow(user) {
 
     // Loop through each message in the chat history and display it in the chat window
     history.chathistory.reverse().forEach((message) => {
-      //console.log("Message: " + message.text + " from: " + message.from + " to: " + message.to + " at: " + message.createdat);
+      console.log(
+        "message.from:",
+        message.from,
+        "user.id:",
+        sessionStorage.getItem("username")
+      );
       const messageContainer = document.createElement("div");
       messageContainer.className =
-        message.from === user.id ? "message sent" : "message received";
+        message.from === sessionStorage.getItem("username")
+          ? "message sent"
+          : "message received";
 
       const timestamp = document.createElement("small");
       timestamp.className = "timestamp";
@@ -146,7 +329,7 @@ function openChatWindow(user) {
 
     // Create a container for the message input and send button
     const inputContainer = document.createElement("div");
-    inputContainer.className = "input-container";
+    inputContainer.className = "input-container-chat";
 
     // Create the message input field
     const messageInput = document.createElement("input");
@@ -250,12 +433,17 @@ function openChatWindow(user) {
           user,
           (chatHistory) => {
             const history = JSON.parse(chatHistory);
-            const newMessages = history.chathistory.reverse();
+            const newMessages = history.chathistory;
+
+            // Store the scroll height before adding new messages
+            const oldScrollHeight = chatContainer.scrollHeight;
 
             newMessages.forEach((message) => {
               const messageContainer = document.createElement("div");
               messageContainer.className =
-                message.from === user.id ? "message sent" : "message received";
+                message.from === sessionStorage.getItem("username")
+                  ? "message sent"
+                  : "message received";
 
               const timestamp = document.createElement("small");
               timestamp.className = "timestamp";
@@ -275,10 +463,9 @@ function openChatWindow(user) {
               );
             });
 
-            // Scroll to the appropriate position after loading new messages
-            chatContainer.scrollTop = newMessages.length
-              ? newMessages[newMessages.length - 1].offsetTop
-              : 0;
+            // Set the scroll position to the difference between the new scroll height and the old scroll height
+            chatContainer.scrollTop =
+              chatContainer.scrollHeight - oldScrollHeight;
 
             isLoading = false;
           },
@@ -290,6 +477,9 @@ function openChatWindow(user) {
 
     // Add scroll event listener to the chat container
     chatContainer.addEventListener("scroll", loadMoreMessages);
+
+    // Scroll to the bottom of the chat window
+    chatContainer.scrollTop = chatContainer.scrollHeight;
   });
 }
 
@@ -325,14 +515,14 @@ function sendMessage(user, messageText) {
   const currentTime = Date.now();
   const timeDiff = currentTime - lastMessageTime;
 
-  // Reset the message count if more than 2 seconds have passed since the last message
-  if (timeDiff > 3000) {
+  // Reset the message count if more than 3 seconds have passed since the last message
+  if (timeDiff > 750) {
     messageCount = 0;
     lastMessageTime = currentTime;
   }
 
   // If the message count is less than the allowed limit, send the message
-  if (messageCount < 5) {
+  if (messageCount < 1) {
     messageCount++;
 
     // Construct the message object
@@ -343,33 +533,40 @@ function sendMessage(user, messageText) {
       text: messageText,
     };
 
+    message.text = standardizeInput(message.text);
     // Send the message to the server
-    socket.send(JSON.stringify(message));
-
-    // Update the chat window with the new message
-    const chatContainer = document.querySelector(".chat-container");
-    const messageContainer = document.createElement("div");
-    messageContainer.className = "message sent";
-
-    const timestamp = document.createElement("small");
-    timestamp.className = "timestamp";
-    timestamp.textContent = new Date().toLocaleTimeString();
-    messageContainer.appendChild(timestamp);
-
-    if (message.from != user.username) {
-      const messageTextElem = document.createElement("p");
-      messageTextElem.textContent = messageText;
-      messageContainer.appendChild(messageTextElem);
+    if (message.text.length > 0 && message.text.length < 100) {
+      socket.send(JSON.stringify(message));
+    } else {
+      alert("Message must be between 1 and 100 characters");
     }
 
-    chatContainer.appendChild(messageContainer);
+    // Update the chat window with the new message
+    if (message.text.length > 0 && message.text.length < 100) {
+      const chatContainer = document.querySelector(".chat-container");
+      const messageContainer = document.createElement("div");
+      messageContainer.className = "message sent";
 
-    // Scroll the chat window to the bottom
-    chatContainer.scrollTop = chatContainer.scrollHeight;
+      const timestamp = document.createElement("small");
+      timestamp.className = "timestamp";
+      timestamp.textContent = new Date().toLocaleTimeString();
+      messageContainer.appendChild(timestamp);
 
-    // Clear the message input field
-    const messageInput = document.querySelector(".input-container input");
-    messageInput.value = "";
+      if (message.from != user.username) {
+        const messageTextElem = document.createElement("p");
+        messageTextElem.textContent = messageText;
+        messageContainer.appendChild(messageTextElem);
+      }
+
+      chatContainer.appendChild(messageContainer);
+      // Scroll the chat window to the bottom
+      chatContainer.scrollTop = chatContainer.scrollHeight;
+      // Clear the message input field
+      const messageInput = document.querySelector(
+        ".input-container-chat input"
+      );
+      messageInput.value = "";
+    }
   } else {
     // Show a warning message to the user
     const warningMessage = "Please do not spam the chat.";
@@ -387,10 +584,10 @@ function sendMessage(user, messageText) {
 }
 
 // Listen for received messages from the server
-// Listen for received messages from the server
 socket.addEventListener("message", (event) => {
   const message = JSON.parse(event.data);
   if (message.type === "message") {
+    console.log("Received message: ", message);
     const chatContainer = document.querySelector(".chat-container");
 
     if (chatContainer) {

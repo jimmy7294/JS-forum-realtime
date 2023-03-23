@@ -65,10 +65,6 @@ if (storedCookie == null) {
           password: document.getElementById("password").value,
         };
 
-        // Save CurrentUsername to sessionStorage
-        (CurrentUsername = document.getElementById("username").value),
-          sessionStorage.setItem("username", CurrentUsername);
-
         // Send login request to server via WebSocket
         socket.send(
           JSON.stringify({
@@ -144,7 +140,16 @@ if (storedCookie == null) {
     socket.onmessage = function (event) {
       // Handle server response
       var message = JSON.parse(event.data);
-      //console.log("Message received from server: ", message);
+      if (message.type === "status") {
+        if (message.data.refresh === "true") {
+          // clear session storage and local storage
+          sessionStorage.clear();
+          localStorage.clear();
+          //location.reload();
+          //save into local storage that the page has been refreshed
+          localStorage.setItem("refreshed", "true");
+        }
+      }
       if (message.type === "loginResponse") {
         //console.log("Received login response Status > ", message.data.status);
         if (message.data.status === "error") {
@@ -172,9 +177,38 @@ if (storedCookie == null) {
 
           }, 5000);
         }
+        if (message.data.status === "error3") {
+          console.log("Wrong credentials failed");
+          //console.log("Login failed");
+          document.getElementById("login-error3").style.display = "block";
+          setTimeout(function () {
+            document.getElementById("login-error3").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
+          }, 5000);
+        }
+        if (message.data.status === "error4") {
+          console.log("Wrong credentials failed");
+          //console.log("Login failed");
+          document.getElementById("login-error4").style.display = "block";
+          setTimeout(function () {
+            document.getElementById("login-error4").style.display = "none";
+            document.getElementById("login-form").style.display = "block";
+          }, 5000);
+        }
+        if (message.data.status === "refresh") {
+          // Refresh the page
+          console.log("Refreshing page");
+          setTimeout(function () {
+            window.location.reload();
+          }, 2000);
+        }
       }
       if (message.type === "loginResponse" && message.data.login === "true") {
-        //console.log("Received login response from server", message.data);
+        // console.log("Received login response from server", message.data);
+
+        // Save CurrentUsername to sessionStorage
+        (CurrentUsername = message.data.username)
+        sessionStorage.setItem("username", CurrentUsername);
         //console.log("Received login response from server", message.data);
         checkLoggedIn(socket); // check if user is logged in after login attempt
         //console.log("User is logged in");
